@@ -60,6 +60,7 @@ function Highlighter({ children }: { children: React.ReactNode }) {
     <span className="relative inline whitespace-nowrap">
       <svg
         aria-hidden="true"
+        className="highlighter-svg"
         style={{
           position: "absolute",
           top: "4%",
@@ -224,13 +225,22 @@ function Home() {
   return (
     <div className="min-h-screen pb-20 selection:bg-primary/20" data-testid="page-home">
 
-      {/* keyframes for chevron bounce */}
+      {/* keyframes */}
       <style>{`
         @keyframes gentleBounce {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(7px); }
         }
         .chevron-bounce { animation: gentleBounce 2.4s ease-in-out infinite; }
+
+        @keyframes highlighterDraw {
+          from { transform: scaleX(0); }
+          to   { transform: scaleX(1); }
+        }
+        .highlighter-svg {
+          transform-origin: left center;
+          animation: highlighterDraw 750ms ease-out 400ms both;
+        }
       `}</style>
 
       {/* ── 1. Hero — full viewport ─────────────────────────────────────── */}
