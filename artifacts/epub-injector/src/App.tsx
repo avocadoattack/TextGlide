@@ -20,24 +20,43 @@ const queryClient = new QueryClient();
 const defaultPreviewText =
   "Fluent readers don't read one word at a time; they take in meaningful phrases per glance. PhraseFlow rebuilds your EPUBs to gently cue those phrase groups with spacing: a free, open tool that works on the device where people actually read.";
 
+type Mode = "pseudosyntactic" | "syntactic";
+
 function friendlyMode(modeUsed: string): string {
-  if (modeUsed.startsWith("smart")) return "Smart mode";
-  return "Simple mode";
+  if (modeUsed === "syntactic") return "Syntactic mode";
+  if (modeUsed === "pseudosyntactic") return "Pseudosyntactic mode";
+  return "Keyword mode";
 }
 
-function isFallbackMode(requestedMode: string, modeUsed: string): boolean {
-  if (requestedMode !== "smart") return false;
-  // Amber warning only when Smart fell all the way back to Simple.
-  // smart_dep is a fully capable tier — show plain "Smart mode" badge for it.
-  return modeUsed === "simple";
+function modeLabel(mode: Mode): string {
+  return mode === "syntactic" ? "Syntactic" : "Pseudosyntactic";
+}
+
+function isFallbackMode(modeUsed: string): boolean {
+  return modeUsed === "keyword_fallback";
+}
+
+// Faint amber underline marker placed at each inserted gap in the hero After card
+function Gap() {
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        borderBottom: "1.5px solid rgba(251,191,36,0.55)",
+        paddingBottom: "1px",
+      }}
+    >
+      {"\u2009"}
+    </span>
+  );
 }
 
 function Home() {
   const [state, setState] = useState({
-    mode: "simple" as "simple" | "smart",
+    mode: "syntactic" as Mode,
     language: "auto",
-    spacingWidth: 0,
-    chunkDensity: 0,
+    spacingWidth: 0,   // 0=subtle, 1=medium, 2=strong
+    chunkDensity: 1,   // 0=subtle, 1=medium (default D), 2=obvious
   });
 
   const [previewText, setPreviewText] = useState(defaultPreviewText);
@@ -163,7 +182,7 @@ function Home() {
   const getSpacingLabel = (val: number) => ["Subtle", "Medium", "Strong"][val];
   const getDensityLabel = (val: number) => ["Subtle", "Medium", "Obvious"][val];
 
-  const showFallback = previewModeUsed ? isFallbackMode(state.mode, previewModeUsed) : false;
+  const showFallback = previewModeUsed ? isFallbackMode(previewModeUsed) : false;
 
   return (
     <div className="min-h-screen pb-20 selection:bg-primary/20" data-testid="page-home">
@@ -189,7 +208,7 @@ function Home() {
             </p>
           </div>
 
-          {/* Before / After — wider cards, smaller gap, thin spaces to match real output */}
+          {/* Before / After comparison */}
           <div className="grid md:grid-cols-2 gap-3 text-left" data-testid="hero-comparison">
             <div className="p-6 rounded-lg bg-muted/30 border border-border/50">
               <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-4">
@@ -202,8 +221,9 @@ function Home() {
             <div className="p-6 rounded-lg bg-primary/5 border border-primary/20 shadow-sm relative overflow-hidden">
               <div className="absolute top-0 left-0 w-1 h-full bg-primary/40" />
               <div className="text-xs uppercase tracking-wider text-primary font-semibold mb-4">After</div>
+              {/* Each inserted gap is wrapped in a faint amber underline marker */}
               <p className="font-serif text-lg leading-[1.9] text-foreground">
-                She wrote every morning&#8201; by the window&#8201; while the city&#8201; came slowly awake outside.
+                She wrote every morning<Gap /> by the window<Gap /> while the city<Gap /> came slowly awake outside.
               </p>
             </div>
           </div>
@@ -241,45 +261,55 @@ function Home() {
                 {/* Left col: Mode + Language */}
                 <div className="space-y-6">
                   <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-medium">Mode</Label>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            className="text-muted-foreground hover:text-foreground"
-                            data-testid="tooltip-mode"
-                          >
-                            <InfoIcon className="h-4 w-4" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-[250px] p-3 text-sm">
-                          <p>
-                            <strong>Simple:</strong> Uses structure words to find phrase breaks.
-                          </p>
-                          <p className="mt-1">
-                            <strong>Smart:</strong> Uses a grammar parser to find phrase breaks more
-                            precisely (falls back if unavailable).
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
+                    <Label className="text-sm font-medium">Mode</Label>
                     <RadioGroup
                       value={state.mode}
-                      onValueChange={(v: "simple" | "smart") => setState({ ...state, mode: v })}
-                      className="flex gap-4"
+                      onValueChange={(v: Mode) => setState({ ...state, mode: v })}
+                      className="flex flex-col gap-2"
                       data-testid="radio-mode"
                     >
-                      <div className="flex items-center space-x-2 bg-muted/20 px-3 py-2 rounded-md border border-border/50">
-                        <RadioGroupItem value="simple" id="mode-simple" />
-                        <Label htmlFor="mode-simple" className="cursor-pointer">
-                          Simple
-                        </Label>
+                      {/* Pseudosyntactic */}
+                      <div className="flex items-center justify-between bg-muted/20 px-3 py-2.5 rounded-md border border-border/50">
+                        <div className="flex items-center gap-2">
+                          <RadioGroupItem value="pseudosyntactic" id="mode-pseudo" />
+                          <Label htmlFor="mode-pseudo" className="cursor-pointer font-normal">
+                            Pseudosyntactic
+                          </Label>
+                        </div>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button className="text-muted-foreground hover:text-foreground ml-1" data-testid="tooltip-mode-pseudo">
+                              <InfoIcon className="h-3.5 w-3.5" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-[260px] p-3 text-sm">
+                            A fast, statistical guess at where phrases begin, from word patterns
+                            rather than full grammar. Like the quick first-pass estimate your brain
+                            makes before it fully parses a sentence. Subtle, frequent cues.
+                          </TooltipContent>
+                        </Tooltip>
                       </div>
-                      <div className="flex items-center space-x-2 bg-muted/20 px-3 py-2 rounded-md border border-border/50">
-                        <RadioGroupItem value="smart" id="mode-smart" />
-                        <Label htmlFor="mode-smart" className="cursor-pointer">
-                          Smart
-                        </Label>
+
+                      {/* Syntactic */}
+                      <div className="flex items-center justify-between bg-muted/20 px-3 py-2.5 rounded-md border border-border/50">
+                        <div className="flex items-center gap-2">
+                          <RadioGroupItem value="syntactic" id="mode-syntactic" />
+                          <Label htmlFor="mode-syntactic" className="cursor-pointer font-normal">
+                            Syntactic
+                          </Label>
+                        </div>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button className="text-muted-foreground hover:text-foreground ml-1" data-testid="tooltip-mode-syntactic">
+                              <InfoIcon className="h-3.5 w-3.5" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-[260px] p-3 text-sm">
+                            A full grammatical analysis of each sentence. Breaks land only at real
+                            clause and phrase boundaries, and tightly bound word groups are never
+                            split. More precise, sometimes sparser.
+                          </TooltipContent>
+                        </Tooltip>
                       </div>
                     </RadioGroup>
                   </div>
@@ -403,7 +433,7 @@ function Home() {
                         className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/20"
                         data-testid="badge-mode-fallback"
                       >
-                        Using the grammar parser (advanced parser unavailable)
+                        Keyword mode (grammar parser unavailable)
                       </span>
                     )}
                     {/* Press-and-hold A/B peek */}
@@ -452,7 +482,7 @@ function Home() {
 
             <div className="flex flex-col items-center gap-5">
 
-              {/* Dropzone — large, centered */}
+              {/* Dropzone */}
               <div
                 className={`w-full border-2 border-dashed flex flex-col items-center justify-center py-16 px-8 text-center cursor-pointer transition-colors rounded-xl ${
                   file
@@ -497,7 +527,7 @@ function Home() {
                 )}
               </div>
 
-              {/* Settings recap — centered */}
+              {/* Settings recap */}
               <div
                 className="flex items-center justify-center gap-2 text-sm text-muted-foreground bg-muted/30 px-5 py-3 rounded-lg border border-border/40 w-full text-center"
                 data-testid="settings-recap"
@@ -505,7 +535,7 @@ function Home() {
                 <InfoIcon className="h-4 w-4 shrink-0" />
                 <span>
                   Using:{" "}
-                  <strong className="text-foreground capitalize">{state.mode}</strong> mode,{" "}
+                  <strong className="text-foreground">{modeLabel(state.mode)}</strong> mode,{" "}
                   <strong className="text-foreground">
                     {getSpacingLabel(state.spacingWidth).toLowerCase()}
                   </strong>{" "}
@@ -518,7 +548,7 @@ function Home() {
                 </span>
               </div>
 
-              {/* Process button — centered */}
+              {/* Process button */}
               <Button
                 className="w-full max-w-xs h-14 text-lg font-medium shadow-md rounded-xl"
                 size="lg"
@@ -603,8 +633,8 @@ function Home() {
                 <strong className="text-foreground font-medium">Pick a mode and adjust the sliders</strong>
               </div>
               <p className="text-muted-foreground leading-relaxed text-sm">
-                Use the live preview above to find the rhythm that feels best for your eyes.
-                Smart mode uses grammar-aware phrase detection; Simple uses keyword rules.
+                Use the live preview to find the rhythm that suits your eyes. Syntactic mode uses
+                full grammar analysis; Pseudosyntactic uses fast pattern detection.
               </p>
             </div>
             <div className="bg-muted/30 border border-border/40 rounded-xl p-6 space-y-3">
@@ -620,38 +650,97 @@ function Home() {
           </div>
         </section>
 
-        {/* 5. The science — full-width, 2-column */}
-        <section className="pt-8 border-t border-border/50 space-y-6" data-testid="section-science">
-          <h3 className="font-serif text-2xl text-foreground">The science</h3>
-          <div className="grid md:grid-cols-2 gap-10">
-            <div className="space-y-4 text-muted-foreground leading-relaxed">
+        {/* 5. How it works and the science — full-width, 2-column */}
+        <section className="pt-8 border-t border-border/50 space-y-8" data-testid="section-science">
+          <h3 className="font-serif text-2xl text-foreground">How it works, and the science behind it</h3>
+
+          {/* Core concepts — two columns */}
+          <div className="grid md:grid-cols-2 gap-x-12 gap-y-5 text-muted-foreground leading-relaxed">
+            <div className="space-y-1">
+              <p className="font-medium text-foreground">Chunking</p>
               <p>
-                PhraseFlow is grounded in decades of reading research on chunking and phrase-based
-                reading. Visual-Syntactic Text Formatting (VSTF) studies show that segmenting text
-                at clause and phrase boundaries, sized to the eye's natural fixation span of roughly
-                8 to 30 characters, can improve comprehension and reduce eyestrain.
-              </p>
-              <p>
-                The eye takes in only about 9 to 15 characters per fixation, and breaks that mirror
-                natural speech prosody aid processing. The evidence is promising but not universal —
-                what helps varies from reader to reader, which is why the spacing is adjustable.
+                Fluent readers don't move word by word; they group words into meaningful phrases and
+                take in each at a glance. PhraseFlow makes those groupings visible.
               </p>
             </div>
-            <div className="space-y-4 text-muted-foreground leading-relaxed">
-              <div className="space-y-2">
-                <p className="font-medium text-foreground text-sm uppercase tracking-wide">Key references</p>
-                <ul className="space-y-1.5 text-sm">
-                  <li>Walker et al. (2005) — Visual-Syntactic Text Formatting</li>
-                  <li>Park &amp; Warschauer (2016) — VSTF and comprehension</li>
-                  <li>Legge et al. (1997) — Characters per fixation in reading</li>
-                  <li>Hirotani, Frazier &amp; Rayner (2006) — Prosody and processing</li>
-                </ul>
+            <div className="space-y-1">
+              <p className="font-medium text-foreground">Syntactically cued formatting</p>
+              <p>
+                Making phrase boundaries visible with spacing. North &amp; Jenkins first measured
+                the effect in 1951: readers were faster and comprehended more when phrase structure
+                was cued.
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="font-medium text-foreground">Pseudosyntax</p>
+              <p>
+                Before you consciously parse a sentence, your brain makes a fast, rough guess at its
+                structure from statistical cues, then refines it. Subtle spacing supports that
+                first-pass guess instead of fighting it.
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="font-medium text-foreground">Cognitive load and cognitive fluency</p>
+              <p>
+                Pre-grouping words lowers the working-memory cost of reading (load) and raises the
+                felt ease of processing (fluency), which tracks with comprehension and stamina.
+              </p>
+            </div>
+            <div className="space-y-1 md:col-span-2">
+              <p className="font-medium text-foreground">Eye-fixation span</p>
+              <p>
+                The eye resolves only about 9 to 15 characters per fixation (Legge et al., 1997).
+                Chunks sized near that span are read with fewer, shorter fixations and less
+                backtracking (Magloire, 2002).
+              </p>
+            </div>
+          </div>
+
+          {/* Two ways to read */}
+          <div className="space-y-4">
+            <h4 className="font-serif text-lg text-foreground">Two ways to read</h4>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="bg-muted/30 border border-border/40 rounded-xl p-5 space-y-2">
+                <p className="font-medium text-foreground">Pseudosyntactic</p>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Mirrors the brain's fast first guess at sentence structure, reading word patterns
+                  to place gentle, frequent cues. Lightweight.
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground/70 border-t border-border/40 pt-4">
-                PhraseFlow is a reading aid, not a medical device. No clinical claims are made.
-                If you find it helps, great. If not, your original EPUB is always unchanged.
-              </p>
+              <div className="bg-muted/30 border border-border/40 rounded-xl p-5 space-y-2">
+                <p className="font-medium text-foreground">Syntactic</p>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Performs a full grammatical parse, breaking only at genuine clause and phrase
+                  boundaries and never inside tightly bound groups. More precise.
+                </p>
+              </div>
             </div>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              <strong className="text-foreground">Why both?</strong> They trade coverage against
+              precision differently, and the better fit depends on the reader and the text. We
+              expect to settle on a single default once real reading shows which one wins.
+            </p>
+          </div>
+
+          {/* References */}
+          <div className="space-y-4 pt-2 border-t border-border/40">
+            <h4 className="font-serif text-lg text-foreground">References</h4>
+            <ul className="grid md:grid-cols-2 gap-x-10 gap-y-2 text-sm text-muted-foreground">
+              <li>North &amp; Jenkins (1951) — ~10.9% faster reading; the foundational syntactically-cued study</li>
+              <li>Graf &amp; Torrey (1966) — ~30.9% comprehension gain</li>
+              <li>Mason &amp; Kendall (1979) — ~26.3% comprehension gain</li>
+              <li>Jandreau, Muncer &amp; Bever (1986) — ~17.9% faster reading</li>
+              <li>Negin (1987) — ~14.9% comprehension gain</li>
+              <li>Magloire (2002) — ~31% faster reading; eye-movement evidence</li>
+              <li>Walker et al. (2005), Visual-Syntactic Text Formatting — up to ~40% comprehension gain</li>
+              <li>Legge et al. (1997) — eye-fixation span</li>
+              <li>Hirotani, Frazier &amp; Rayner (2006) — prosodic boundaries</li>
+            </ul>
+            <p className="text-xs text-muted-foreground/70 leading-relaxed pt-2 border-t border-border/30">
+              These effect sizes span decades and methods, and several come from developer-affiliated
+              or small studies. The direction is consistent — cueing phrases helps — but treat the
+              magnitudes as a range, and expect individual variation.
+            </p>
           </div>
         </section>
 

@@ -45,7 +45,7 @@ def add_cors(response):
 # Helpers
 # ---------------------------------------------------------------------------
 
-_VALID_MODES = {"simple", "smart"}
+_VALID_MODES = {"pseudosyntactic", "syntactic"}
 _VALID_WIDTHS = {"subtle", "medium", "strong"}
 _VALID_DENSITIES = {"subtle", "medium", "obvious"}
 _VALID_LANGS = {"auto", "en", "es"}
@@ -164,15 +164,10 @@ def process():
 
 
 def _fallback_message(requested: str, actual: str) -> str:
-    if requested == "smart" and actual == "smart_dep":
+    if actual == "keyword_fallback":
         return (
-            "The constituency parser (benepar) was not available; "
-            "phrase boundaries were detected using the dependency parser instead."
-        )
-    if requested == "smart" and actual == "simple":
-        return (
-            "Smart mode was unavailable (spaCy model could not be loaded); "
-            "Simple mode was used instead."
+            f"{requested.capitalize()} mode was requested but the grammar model "
+            "could not be loaded. A keyword heuristic was used instead."
         )
     return f"Mode requested: {requested}. Mode used: {actual}."
 

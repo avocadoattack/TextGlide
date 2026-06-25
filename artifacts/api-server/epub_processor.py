@@ -5,9 +5,9 @@ Inserts subtle spacing at major phrase boundaries to aid reading comprehension.
 Only text nodes are ever modified — tags, attributes, scripts, styles, and
 intra-word characters are never touched.
 
-Chunking levels:
-  Simple  – keyword/punctuation heuristic, per-language function-word list
-  Smart   – benepar constituency parse → spaCy dep-parse fallback → Simple fallback
+Chunking modes:
+  Pseudosyntactic – POS-tag heuristic (spaCy); falls back to keyword list if spaCy absent.
+  Syntactic       – Full dependency-parse (spaCy); falls back to keyword list if spaCy absent.
 
 DRM detection: refuses EPUBs that have <EncryptedData> in META-INF/encryption.xml.
 """
@@ -41,25 +41,19 @@ DENSITY_CFG: dict[str, dict] = {
     "obvious": {"min_chars":  7, "level": 3},
 }
 
-# Simple-mode function words that signal phrase/clause beginnings — English
-SIMPLE_BREAKS_EN: set[str] = {
-    # coordinating conjunctions (clause-level)
+# Keyword fallback function words — English (used only when spaCy is unavailable)
+_FALLBACK_WORDS_EN: set[str] = {
     "and", "or", "but", "so", "yet", "nor",
-    # subordinating conjunctions / relative markers
     "that", "which", "who", "whom", "whose", "when", "where", "while",
     "because", "although", "though", "unless", "until", "since", "if",
-    # prepositions starting major PPs
     "to", "of", "in", "on", "at", "for", "with", "by", "from", "as", "about",
 }
 
-# Simple-mode function words — Spanish
-SIMPLE_BREAKS_ES: set[str] = {
-    # coordinating conjunctions
+# Keyword fallback function words — Spanish
+_FALLBACK_WORDS_ES: set[str] = {
     "y", "e", "o", "u", "pero", "sino", "ni",
-    # subordinating conjunctions / relative markers
     "que", "quien", "donde", "cuando", "como", "aunque", "porque",
     "si", "para", "mientras", "hasta", "desde", "antes",
-    # prepositions starting major PPs
     "de", "en", "a", "con", "por", "sin", "sobre", "entre",
 }
 
@@ -99,7 +93,6 @@ def detect_language(text: str) -> Literal["en", "es"]:
 class _ModelState:
     def __init__(self) -> None:
         self.nlp = None
-        self.has_benepar: bool = False
         self.tried: bool = False
         self.failed: bool = False
 
@@ -107,8 +100,8 @@ class _ModelState:
 _models: dict[str, _ModelState] = {"en": _ModelState(), "es": _ModelState()}
 
 _MODEL_IDS = {
-    "en": ("en_core_web_sm", "benepar_en3"),
-    "es": ("es_core_news_sm", "benepar_es3"),
+    "en": "en_core_web_sm",
+    "es": "es_core_news_sm",
 }
 
 
@@ -117,36 +110,17 @@ def _load_model(lang: str) -> _ModelState:
     if state.tried:
         return state
     state.tried = True
-    spacy_id, benepar_id = _MODEL_IDS.get(lang, ("en_core_web_sm", "benepar_en3"))
+    spacy_id = _MODEL_IDS.get(lang, "en_core_web_sm")
     try:
         import spacy
-        nlp = spacy.load(spacy_id)
-        state.nlp = nlp
+        state.nlp = spacy.load(spacy_id)
     except Exception:
         state.failed = True
-        return state
-    try:
-        import benepar
-        if not nlp.has_pipe("benepar"):
-            nlp.add_pipe("benepar", config={"model": benepar_id})
-        state.has_benepar = True
-    except Exception:
-        state.has_benepar = False
     return state
 
 
-def get_smart_status(lang: str) -> str:
-    """Return a human-readable string describing which mode will run."""
-    state = _load_model(lang)
-    if state.failed or state.nlp is None:
-        return "simple"
-    if state.has_benepar:
-        return "smart_benepar"
-    return "smart_dep"
-
-
 # ---------------------------------------------------------------------------
-# Glued-unit detection (positions where we must NOT break)
+# Glued-unit detection (positions where we must NOT break) — Syntactic mode
 # ---------------------------------------------------------------------------
 
 def _forbidden_breaks(tokens: list) -> set[int]:
@@ -161,7 +135,7 @@ def _forbidden_breaks(tokens: list) -> set[int]:
       aux/auxpass→ governed verb              ("will come", "was written")
       neg        → following token            ("don't read")
       prt / compound:prt → verb particle     ("pick up")
-      mark "to"  → the token after "to"      ("to gently cue" — don't break into the VP)
+      mark "to"  → the token after "to"      ("to gently cue")
       ADP (prep) → directly following obj    (don't orphan a bare preposition)
       nummod     → governed noun             ("three cats")
       amod       → governed noun             ("free open tool")
@@ -174,47 +148,36 @@ def _forbidden_breaks(tokens: list) -> set[int]:
             continue
         prev = tokens[i - 1]
 
-        # det → noun/adj
         if prev.dep_ == "det" and prev.head == tok:
             forbidden.add(tok.i)
 
-        # advmod → its head verb/adj (KEY FIX: prevents "gently  cue", "actually  read")
         if prev.dep_ == "advmod" and prev.head == tok:
             forbidden.add(tok.i)
 
-        # aux / auxpass → head verb
         if prev.dep_ in ("aux", "auxpass") and prev.head == tok:
             forbidden.add(tok.i)
 
-        # neg → following token
         if prev.dep_ == "neg":
             forbidden.add(tok.i)
 
-        # verb particle
         if prev.dep_ in ("prt", "compound:prt"):
             forbidden.add(tok.i)
 
-        # infinitival "to": don't break between "to" and what follows it
         if prev.dep_ == "mark" and prev.text.lower() == "to":
             forbidden.add(tok.i)
 
-        # bare preposition → its object (never orphan a preposition)
         if prev.pos_ == "ADP" and tok.dep_ in ("pobj", "dobj", "nmod"):
             forbidden.add(tok.i)
 
-        # nummod → noun
         if prev.dep_ == "nummod" and prev.head == tok:
             forbidden.add(tok.i)
 
-        # amod → noun ("free, open tool")
         if prev.dep_ == "amod" and prev.head == tok:
             forbidden.add(tok.i)
 
-        # compound / nn → noun ("phrase groups", "noun phrase")
         if prev.dep_ in ("compound", "nn") and prev.head == tok:
             forbidden.add(tok.i)
 
-        # possessive → noun ("reader's eye")
         if prev.dep_ in ("poss", "possessive") and prev.head == tok:
             forbidden.add(tok.i)
 
@@ -261,62 +224,8 @@ def _apply_min_chars(
         if is_forced or len(chunk_text) >= min_chars:
             result.append(abs_pos)
             pending = end
-        # else: soft break, chunk too short — merge into the next chunk
 
     return set(result)
-
-
-# ---------------------------------------------------------------------------
-# Benepar-based chunker
-# ---------------------------------------------------------------------------
-
-def _is_direct_child_of_root(span, sent, all_spans: list) -> bool:
-    """True if the smallest constituent properly containing span is the sentence itself."""
-    ss, se = span.start, span.end
-    smallest_parent_size = (sent.end - sent.start) + 1
-    smallest_parent = None
-
-    for other in all_spans:
-        os, oe = other.start, other.end
-        if os == ss and oe == se:
-            continue
-        if os <= ss and oe >= se:
-            size = oe - os
-            if size < smallest_parent_size:
-                smallest_parent_size = size
-                smallest_parent = other
-
-    if smallest_parent is None:
-        return True
-    return smallest_parent.start == sent.start and smallest_parent.end == sent.end
-
-
-def _breaks_benepar(sent, level: int, forbidden: set[int]) -> set[int]:
-    breaks: set[int] = set()
-    try:
-        spans = list(sent._.constituents)
-    except Exception:
-        return breaks
-
-    for span in spans:
-        label = span.label_
-        start = span.start
-        if start == sent.start:
-            continue
-        if start in forbidden:
-            continue
-
-        if label in ("VP", "SBAR", "S", "SINV", "SQ"):
-            if _is_direct_child_of_root(span, sent, spans):
-                breaks.add(start)
-        elif level >= 2 and label == "PP":
-            if _is_direct_child_of_root(span, sent, spans):
-                breaks.add(start)
-        elif level >= 3 and label in ("NP", "ADJP", "ADVP"):
-            if len(span) >= 2 and _is_direct_child_of_root(span, sent, spans):
-                breaks.add(start)
-
-    return breaks
 
 
 # ---------------------------------------------------------------------------
@@ -339,76 +248,119 @@ def _forced_breaks_punct(sent, forbidden: set[int]) -> set[int]:
 
 
 # ---------------------------------------------------------------------------
-# Dependency-parse fallback chunker
+# POS-based chunker (Pseudosyntactic mode)
 # ---------------------------------------------------------------------------
 
-# dep labels that are valid break points at ALL density levels (level 1+)
-_BREAK_L1 = frozenset({
-    "prep",          # prepositional phrase boundary (break before the whole PP)
-    "advcl",         # adverbial clause ("while the city came awake")
-    "relcl",         # relative clause  ("that works on the device")
-    "ccomp",         # clausal complement ("I know that he came")
-    "xcomp",         # open clausal complement ("to gently cue")
-    "conj",          # coordinated clause ("they take in")
-    "cc",            # coordinating conjunction itself ("and", "but")
-    "mark",          # subordinating conjunction / clause introducer
-                     # (infinitival "to" is handled by _forbidden_breaks instead)
-})
+# POS tags that signal a new phrase boundary, by density level
+_PSEUDO_POS_L1 = frozenset({"CCONJ", "SCONJ"})        # coordinating + subordinating conj
+_PSEUDO_POS_L2 = frozenset({"CCONJ", "SCONJ", "ADP"}) # + prepositions
+_PSEUDO_PRON_L3 = frozenset({"who", "which", "whom"})  # relative pronouns (level 3 only)
 
+
+def _breaks_pos(sent, level: int) -> set[int]:
+    """
+    POS-based break candidates for Pseudosyntactic mode.
+    No dependency tree consulted — only POS tags and the token's position.
+    """
+    trigger_pos = _PSEUDO_POS_L2 if level >= 2 else _PSEUDO_POS_L1
+    breaks: set[int] = set()
+    for tok in sent:
+        if tok.i == sent.start:
+            continue
+        if tok.pos_ in trigger_pos:
+            breaks.add(tok.i)
+        if level >= 3 and tok.pos_ == "PRON" and tok.text.lower() in _PSEUDO_PRON_L3:
+            breaks.add(tok.i)
+    return breaks
+
+
+def _patch_pseudosyntactic(
+    text: str, gap: str, density: str, lang: str
+) -> tuple[str, str]:
+    """
+    POS-heuristic chunker for Pseudosyntactic mode.
+    Returns (patched_text, mode_used).
+    mode_used: 'pseudosyntactic' on success, 'keyword_fallback' if spaCy unavailable.
+    """
+    state = _load_model(lang)
+    cfg = DENSITY_CFG[density]
+    level = cfg["level"]
+    min_chars = cfg["min_chars"]
+
+    if state.failed or state.nlp is None:
+        return _keyword_fallback(text, gap, density, lang), "keyword_fallback"
+
+    try:
+        doc = state.nlp(text)
+    except Exception:
+        return _keyword_fallback(text, gap, density, lang), "keyword_fallback"
+
+    result_parts: list[str] = []
+    for sent in doc.sents:
+        tokens = list(sent)
+        if not tokens:
+            continue
+        raw_breaks = _breaks_pos(sent, level)
+        # Use empty forbidden set — pseudosyntactic doesn't consult the dep tree
+        forced = _forced_breaks_punct(sent, set())
+        breaks = _apply_min_chars(raw_breaks, tokens, min_chars, forced)
+        result_parts.append(_insert_gaps(tokens, breaks, gap))
+
+    return "".join(result_parts), "pseudosyntactic"
+
+
+# ---------------------------------------------------------------------------
+# Dependency-parse chunker (Syntactic mode)
+# ---------------------------------------------------------------------------
+
+# dep labels that trigger a break at ALL density levels (level 1+)
+_BREAK_L1 = frozenset({
+    "prep",   # prepositional phrase boundary
+    "advcl",  # adverbial clause ("while the city came awake")
+    "relcl",  # relative clause  ("that works on the device")
+    "ccomp",  # clausal complement ("I know that he came")
+    "xcomp",  # open clausal complement ("to gently cue")
+    "conj",   # coordinated clause ("they take in")
+    "cc",     # coordinating conjunction itself ("and", "but")
+    "mark",   # subordinating conjunction / clause introducer
+})
 
 _CLAUSE_DEPS = frozenset({"advcl", "relcl", "ccomp", "xcomp", "conj"})
 
 
 def _breaks_dep(sent, level: int, forbidden: set[int]) -> set[int]:
     """
-    Insert a break before a token when:
-      1. Its dep label is in the positive set for the current level, AND
-      2. The chosen break position is not in the forbidden set, AND
-      3. The left-chunk min-chars guardrail (applied later) is satisfied.
+    Dependency-parse break candidates for Syntactic mode.
 
-    Break-position rule:
-      For clause-introducing deps (advcl, relcl, ccomp, xcomp, conj) we break
-      before tok.left_edge — the leftmost token of the whole clause subtree —
-      rather than before the clause head.  This ensures the relative pronoun
-      ("that"), subject ("they"), or subordinator ("while") stays with the
-      clause it introduces, rather than being orphaned to the left of the break.
+    For clause-introducing deps (advcl, relcl, ccomp, xcomp, conj) the break
+    lands at tok.left_edge — the leftmost token of the entire subtree — so the
+    relative pronoun, subject, or subordinator stays with its clause.
 
-    Positive rules by level:
-      L1 (subtle)  : advcl, relcl, ccomp, xcomp, conj (left_edge)
-                     + prep, cc, mark (tok itself)
-      L2 (medium)  : same as L1
-      L3 (obvious) : same as L2 + nsubj/nsubjpass when head is ROOT
-
-    Semicolons and colons are handled separately by _forced_breaks_punct
-    and always bypass the min-chars guardrail.
+    L1 (subtle)  : _CLAUSE_DEPS (left_edge) + prep, cc, mark (tok itself)
+    L2 (medium)  : same as L1
+    L3 (obvious) : same as L2 + nsubj/nsubjpass when head is ROOT
     """
     breaks: set[int] = set()
 
     for tok in sent:
         if tok.i == sent.start:
             continue
-
         d = tok.dep_
-
         if tok.i in forbidden:
             continue
 
-        # Clause-level deps: break at the leftmost token of the subtree
         if d in _CLAUSE_DEPS:
             edge_i = tok.left_edge.i
             if edge_i == sent.start:
-                # entire subtree starts the sentence — no useful break
                 continue
             if edge_i not in forbidden:
                 breaks.add(edge_i)
             continue
 
-        # Remaining L1+ labels: break before tok itself
         if d in _BREAK_L1:
             breaks.add(tok.i)
             continue
 
-        # L3 only: subject→predicate boundary when head is ROOT
         if level >= 3 and d in ("nsubj", "nsubjpass") and tok.head.dep_ == "ROOT":
             breaks.add(tok.i)
 
@@ -423,7 +375,6 @@ def _insert_gaps(tokens: list, breaks: set[int], gap: str) -> str:
     parts: list[str] = []
     for tok in tokens:
         if tok.i in breaks:
-            # Replace any whitespace before this token with gap + space
             if parts and parts[-1].endswith(" "):
                 parts[-1] = parts[-1][:-1]
             parts.append(gap + " ")
@@ -437,18 +388,18 @@ def _insert_gaps(tokens: list, breaks: set[int], gap: str) -> str:
 # High-level patch functions
 # ---------------------------------------------------------------------------
 
-def _patch_simple(text: str, gap: str, density: str, lang: str) -> str:
-    """Keyword + punctuation heuristic."""
-    words = SIMPLE_BREAKS_EN if lang == "en" else SIMPLE_BREAKS_ES
+def _keyword_fallback(text: str, gap: str, density: str, lang: str) -> str:
+    """
+    Last-resort keyword/structure-word heuristic — no spaCy required.
+    Used only when spaCy itself fails to load.
+    """
+    words = _FALLBACK_WORDS_EN if lang == "en" else _FALLBACK_WORDS_ES
     min_chars = DENSITY_CFG[density]["min_chars"]
 
-    # After sentence-terminal punctuation
     patched = SENTENCE_END_RE.sub(lambda m: m.group(1) + gap + " ", text)
 
-    # Before structure words — only if the preceding chunk is wide enough
     def maybe_gap(m: re.Match) -> str:
         before = patched[: m.start()]
-        # Count chars since the last gap insertion
         last_gap = before.rfind(gap)
         chars_since = len(before) - (last_gap + len(gap)) if last_gap >= 0 else len(before)
         if chars_since >= min_chars:
@@ -465,14 +416,15 @@ def _patch_simple(text: str, gap: str, density: str, lang: str) -> str:
     return patched
 
 
-def _patch_smart(text: str, gap: str, density: str, lang: str) -> tuple[str, str]:
+def _patch_syntactic(text: str, gap: str, density: str, lang: str) -> tuple[str, str]:
     """
+    Full dependency-parse chunker for Syntactic mode.
     Returns (patched_text, mode_used).
-    mode_used is one of: 'smart_benepar', 'smart_dep', 'simple'.
+    mode_used: 'syntactic' on success, 'keyword_fallback' if spaCy unavailable.
     """
     state = _load_model(lang)
     if state.failed or state.nlp is None:
-        return _patch_simple(text, gap, density, lang), "simple"
+        return _keyword_fallback(text, gap, density, lang), "keyword_fallback"
 
     cfg = DENSITY_CFG[density]
     level = cfg["level"]
@@ -481,35 +433,20 @@ def _patch_smart(text: str, gap: str, density: str, lang: str) -> tuple[str, str
     try:
         doc = state.nlp(text)
     except Exception:
-        return _patch_simple(text, gap, density, lang), "simple"
+        return _keyword_fallback(text, gap, density, lang), "keyword_fallback"
 
     result_parts: list[str] = []
-    mode_used = "smart_benepar" if state.has_benepar else "smart_dep"
-
     for sent in doc.sents:
         tokens = list(sent)
         if not tokens:
             continue
         forbidden = _forbidden_breaks(tokens)
-
         forced = _forced_breaks_punct(sent, forbidden)
-
-        if state.has_benepar:
-            try:
-                raw_breaks = _breaks_benepar(sent, level, forbidden)
-            except Exception:
-                raw_breaks = _breaks_dep(sent, level, forbidden)
-                mode_used = "smart_dep"
-        else:
-            raw_breaks = _breaks_dep(sent, level, forbidden)
-
+        raw_breaks = _breaks_dep(sent, level, forbidden)
         breaks = _apply_min_chars(raw_breaks, tokens, min_chars, forced)
         result_parts.append(_insert_gaps(tokens, breaks, gap))
-        # preserve trailing whitespace after sentence
-        if sent.end < len(doc) and doc[sent.end - 1].whitespace_:
-            pass  # already included via whitespace_ on last token
 
-    return "".join(result_parts), mode_used
+    return "".join(result_parts), "syntactic"
 
 
 # ---------------------------------------------------------------------------
@@ -557,15 +494,14 @@ def _patch_document(
         if not original.strip():
             continue
 
-        # Resolve "auto" language per text node
         eff_lang = language
         if language == "auto":
             eff_lang = detect_language(original)
 
-        if mode == "smart":
-            patched, mode_used = _patch_smart(original, gap, chunk_density, eff_lang)
+        if mode == "syntactic":
+            patched, mode_used = _patch_syntactic(original, gap, chunk_density, eff_lang)
         else:
-            patched = _patch_simple(original, gap, chunk_density, eff_lang)
+            patched, mode_used = _patch_pseudosyntactic(original, gap, chunk_density, eff_lang)
 
         if patched != original:
             node.replace_with(NavigableString(patched))
@@ -597,9 +533,9 @@ def preview_text(
     if language == "auto":
         eff_lang = detect_language(text)
 
-    if mode == "smart":
-        return _patch_smart(text, gap, chunk_density, eff_lang)
-    return _patch_simple(text, gap, chunk_density, eff_lang), "simple"
+    if mode == "syntactic":
+        return _patch_syntactic(text, gap, chunk_density, eff_lang)
+    return _patch_pseudosyntactic(text, gap, chunk_density, eff_lang)
 
 
 # ---------------------------------------------------------------------------
@@ -645,62 +581,45 @@ def _find_opf(zf: zipfile.ZipFile) -> str | None:
         container = zf.read("META-INF/container.xml")
         s = BeautifulSoup(container, "lxml-xml")
         rf = s.find("rootfile")
-        if rf:
-            return rf.get("full-path")
+        if rf and rf.get("full-path"):
+            return rf["full-path"]
     except Exception:
         pass
-    for n in zf.namelist():
-        if n.lower().endswith(".opf"):
-            return n
+    for name in zf.namelist():
+        if name.lower().endswith(".opf"):
+            return name
     return None
 
 
 def process_epub(
-    input_path: str,
+    epub_path: str,
     mode: str,
     spacing_width: str,
     chunk_density: str,
     language: str,
 ) -> tuple[bytes, str]:
     """
-    Process an EPUB file.
+    Process every content document in the EPUB.
     Returns (epub_bytes, mode_actually_used).
-    mode_actually_used may differ from mode when a fallback was triggered.
     """
-    with zipfile.ZipFile(input_path, "r") as zf_in:
-        content_paths = _get_content_doc_paths(zf_in)
-        norm_paths = {p.replace("\\", "/") for p in content_paths}
-
-        out_buf = io.BytesIO()
+    with zipfile.ZipFile(epub_path, "r") as zf:
+        content_paths = _get_content_doc_paths(zf)
+        names = zf.namelist()
         mode_used = mode
 
-        with zipfile.ZipFile(out_buf, "w", compression=zipfile.ZIP_DEFLATED) as zf_out:
-            # mimetype MUST be first and uncompressed
-            if "mimetype" in zf_in.namelist():
-                zf_out.writestr(
-                    zipfile.ZipInfo("mimetype"),
-                    zf_in.read("mimetype"),
-                )
-
-            for item in zf_in.infolist():
-                if item.filename == "mimetype":
-                    continue
-                raw = zf_in.read(item.filename)
-                norm = item.filename.replace("\\", "/")
-
-                if norm in norm_paths:
+        out_buf = io.BytesIO()
+        with zipfile.ZipFile(out_buf, "w", compression=zipfile.ZIP_DEFLATED) as out_zf:
+            for name in names:
+                data = zf.read(name)
+                if name in content_paths:
                     try:
                         patched, mu = _patch_document(
-                            raw, mode, spacing_width, chunk_density, language
+                            data, mode, spacing_width, chunk_density, language
                         )
+                        data = patched
                         mode_used = mu
                     except Exception:
-                        patched = raw
+                        pass
+                out_zf.writestr(name, data)
 
-                    zi = zipfile.ZipInfo(item.filename)
-                    zi.compress_type = zipfile.ZIP_DEFLATED
-                    zf_out.writestr(zi, patched)
-                else:
-                    zf_out.writestr(item, raw)
-
-    return out_buf.getvalue(), mode_used
+        return out_buf.getvalue(), mode_used
