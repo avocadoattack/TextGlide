@@ -1,30 +1,93 @@
-import { useState, ChangeEvent } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import NotFound from "@/pages/not-found";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { InfoIcon, AlertCircle, FileText, UploadCloud, CheckCircle2, Download } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { InfoIcon, AlertCircle, FileText, UploadCloud, CheckCircle2, Download, Sun, Moon, Book } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
+import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
 
+const defaultPreviewText = "Fluent readers don't read one word at a time; they take in meaningful phrases per glance. PhraseFlow rebuilds your EPUBs to gently cue those phrase groups with spacing: a free, open tool that works on the device where people actually read.";
+
 function Home() {
+  const [theme, setTheme] = useState<"light" | "sepia" | "dark">(() => {
+    return (localStorage.getItem("phraseflow-theme") as any) || "light";
+  });
+
+  const [state, setState] = useState({
+    mode: "simple" as "simple" | "smart",
+    language: "auto",
+    spacingWidth: 0,
+    chunkDensity: 0,
+  });
+
+  const [previewText, setPreviewText] = useState(defaultPreviewText);
+  const [previewResult, setPreviewResult] = useState("");
+  const [previewModeUsed, setPreviewModeUsed] = useState("");
+  const [previewLoading, setPreviewLoading] = useState(false);
+
   const [file, setFile] = useState<File | null>(null);
-  const [mode, setMode] = useState<"simple" | "smart">("simple");
-  const [intensityVal, setIntensityVal] = useState<number>(50);
   const [status, setStatus] = useState<"idle" | "processing" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [fallbackMsg, setFallbackMsg] = useState("");
   const [downloadUrl, setDownloadUrl] = useState("");
   const [downloadFilename, setDownloadFilename] = useState("");
-  
+
+  useEffect(() => {
+    document.documentElement.classList.remove("light", "sepia", "dark");
+    document.documentElement.classList.add(theme);
+    localStorage.setItem("phraseflow-theme", theme);
+  }, [theme]);
+
+  // Debounced Preview Fetch
+  useEffect(() => {
+    const handler = setTimeout(async () => {
+      setPreviewLoading(true);
+      try {
+        const spacingStr = state.spacingWidth === 0 ? "subtle" : state.spacingWidth === 1 ? "medium" : "strong";
+        const densityStr = state.chunkDensity === 0 ? "subtle" : state.chunkDensity === 1 ? "medium" : "obvious";
+        
+        const res = await fetch('/api/preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: previewText,
+            mode: state.mode,
+            language: state.language,
+            spacing_width: spacingStr,
+            chunk_density: densityStr
+          })
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          setPreviewResult(data.result);
+          setPreviewModeUsed(data.mode_used);
+        } else {
+          setPreviewResult("Failed to load preview.");
+          setPreviewModeUsed("");
+        }
+      } catch (err) {
+        setPreviewResult("Error connecting to server.");
+        setPreviewModeUsed("");
+      } finally {
+        setPreviewLoading(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(handler);
+  }, [previewText, state]);
+
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (selected) {
@@ -51,9 +114,10 @@ function Home() {
     
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("mode", mode);
-    const intensityStr = intensityVal === 0 ? "subtle" : intensityVal === 50 ? "medium" : "strong";
-    formData.append("intensity", intensityStr);
+    formData.append("mode", state.mode);
+    formData.append("language", state.language);
+    formData.append("spacing_width", state.spacingWidth === 0 ? "subtle" : state.spacingWidth === 1 ? "medium" : "strong");
+    formData.append("chunk_density", state.chunkDensity === 0 ? "subtle" : state.chunkDensity === 1 ? "medium" : "obvious");
     
     try {
       const res = await fetch('/api/process', { method: 'POST', body: formData });
@@ -68,7 +132,7 @@ function Home() {
       const url = URL.createObjectURL(blob);
       
       const contentDisposition = res.headers.get('Content-Disposition');
-      let filename = "output_phrase_spaced.epub";
+      let filename = "phraseflow_output.epub";
       if (contentDisposition) {
         const match = contentDisposition.match(/filename="?([^"]+)"?/);
         if (match && match[1]) filename = match[1];
@@ -83,149 +147,356 @@ function Home() {
     }
   };
 
+  const getSpacingLabel = (val: number) => ["Subtle", "Medium", "Strong"][val];
+  const getDensityLabel = (val: number) => ["Subtle", "Medium", "Obvious"][val];
+
   return (
-    <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4 md:p-8" data-testid="page-home">
-      <Card className="w-full max-w-lg border-border bg-card shadow-sm rounded-sm border-t-4 border-t-primary" data-testid="card-main">
-         <CardHeader className="text-center pb-8 pt-10">
-           <CardTitle className="font-serif text-3xl font-medium tracking-tight text-card-foreground" data-testid="text-title">Phrase-Spacing</CardTitle>
-           <CardDescription className="text-base mt-3 text-muted-foreground max-w-[280px] mx-auto" data-testid="text-description">
-             A quiet, focused utility for reading comfort.
-           </CardDescription>
-         </CardHeader>
-         <CardContent className="space-y-10 px-6 md:px-12">
-           {/* 1. File Upload */}
-           <div className="space-y-3">
-             <Label className="text-xs uppercase tracking-widest text-muted-foreground font-semibold" data-testid="label-upload">1. Select Book</Label>
-             <div 
-               className={`border-2 border-dashed flex flex-col items-center justify-center p-8 text-center cursor-pointer transition-colors rounded-sm ${file ? 'border-primary/50 bg-primary/5' : 'border-border hover:border-primary/30 hover:bg-accent/50'}`}
-               onClick={() => document.getElementById('epub-upload')?.click()}
-               data-testid="upload-area"
-             >
-               <input 
-                 id="epub-upload" 
-                 type="file" 
-                 accept=".epub" 
-                 className="hidden" 
-                 onChange={handleFileChange}
-                 data-testid="input-file"
-               />
-               {file ? (
-                 <div className="flex flex-col items-center" data-testid="file-selected">
-                   <FileText className="h-8 w-8 text-primary mb-3 opacity-80" />
-                   <p className="text-sm font-medium text-foreground">{file.name}</p>
-                   <p className="text-xs text-muted-foreground mt-1">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                 </div>
-               ) : (
-                 <div className="flex flex-col items-center" data-testid="upload-prompt">
-                   <UploadCloud className="h-8 w-8 text-muted-foreground mb-3" />
-                   <p className="text-sm text-muted-foreground">Click to browse or drag .epub file here</p>
-                 </div>
-               )}
-             </div>
-           </div>
+    <div className="min-h-screen pb-20 selection:bg-primary/20" data-testid="page-home">
+      {/* Header / Theme Toggle */}
+      <header className="max-w-4xl mx-auto px-6 pt-6 flex justify-end">
+        <div className="flex bg-muted/50 p-1 rounded-full border border-border/50 shadow-sm" data-testid="theme-toggle">
+          <button 
+            onClick={() => setTheme("light")} 
+            className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-colors ${theme === "light" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            data-testid="theme-light"
+          >
+            <Sun className="h-3 w-3" /> Light
+          </button>
+          <button 
+            onClick={() => setTheme("sepia")} 
+            className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-colors ${theme === "sepia" ? "bg-[#f5f0e8] shadow-sm text-[#5c4a2a] border border-[#e5dfd3]" : "text-muted-foreground hover:text-foreground"}`}
+            data-testid="theme-sepia"
+          >
+            <Book className="h-3 w-3" /> Sepia
+          </button>
+          <button 
+            onClick={() => setTheme("dark")} 
+            className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-colors ${theme === "dark" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            data-testid="theme-dark"
+          >
+            <Moon className="h-3 w-3" /> Dark
+          </button>
+        </div>
+      </header>
 
-           {/* 2. Mode Selector */}
-           <div className="space-y-4">
-             <div className="flex items-center gap-2">
-               <Label className="text-xs uppercase tracking-widest text-muted-foreground font-semibold" data-testid="label-mode">2. Processing Mode</Label>
-               <Tooltip>
-                 <TooltipTrigger asChild>
-                   <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full" data-testid="button-tooltip-mode">
-                     <InfoIcon className="h-3 w-3" />
-                   </Button>
-                 </TooltipTrigger>
-                 <TooltipContent className="max-w-[250px] text-sm" data-testid="tooltip-mode-content">
-                   <p><strong>Simple:</strong> Keyword-based gaps.</p>
-                   <p className="mt-1"><strong>Smart:</strong> AI phrase detection (falls back to Simple if unavailable).</p>
-                 </TooltipContent>
-               </Tooltip>
-             </div>
-             <RadioGroup value={mode} onValueChange={(v: "simple" | "smart") => setMode(v)} className="flex gap-6" data-testid="radio-mode">
-               <div className="flex items-center space-x-2">
-                 <RadioGroupItem value="simple" id="mode-simple" data-testid="radio-mode-simple" />
-                 <Label htmlFor="mode-simple" className="font-medium cursor-pointer text-sm">Simple</Label>
-               </div>
-               <div className="flex items-center space-x-2">
-                 <RadioGroupItem value="smart" id="mode-smart" data-testid="radio-mode-smart" />
-                 <Label htmlFor="mode-smart" className="font-medium cursor-pointer text-sm">Smart</Label>
-               </div>
-             </RadioGroup>
-           </div>
+      <main className="max-w-3xl mx-auto px-6 pt-12 md:pt-20 space-y-24">
+        
+        {/* 1. Hero */}
+        <section className="space-y-10 text-center" data-testid="section-hero">
+          <div className="space-y-6">
+            <h1 className="font-serif text-5xl md:text-6xl font-medium tracking-tight text-foreground" data-testid="hero-headline">
+              Read in phrases, not word by word.
+            </h1>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed" data-testid="hero-subhead">
+              PhraseFlow adds subtle spacing at the natural phrase boundaries in your EPUBs, so your eyes group words the way fluent readers already do. Then it hands you a file ready for Kindle.
+            </p>
+          </div>
 
-           {/* 3. Gap Intensity */}
-           <div className="space-y-4">
-             <Label className="text-xs uppercase tracking-widest text-muted-foreground font-semibold" data-testid="label-intensity">3. Gap Intensity</Label>
-             <div className="px-1 pt-2">
-               <Slider 
-                 defaultValue={[50]} 
-                 max={100} 
-                 step={50} 
-                 onValueChange={(v) => setIntensityVal(v[0])}
-                 data-testid="slider-intensity"
-               />
-               <div className="flex justify-between mt-3 text-xs text-muted-foreground font-medium" data-testid="intensity-labels">
-                 <span className={intensityVal === 0 ? "text-foreground" : "cursor-pointer hover:text-foreground transition-colors"} onClick={() => setIntensityVal(0)}>Subtle</span>
-                 <span className={intensityVal === 50 ? "text-foreground" : "cursor-pointer hover:text-foreground transition-colors"} onClick={() => setIntensityVal(50)}>Medium</span>
-                 <span className={intensityVal === 100 ? "text-foreground" : "cursor-pointer hover:text-foreground transition-colors"} onClick={() => setIntensityVal(100)}>Strong</span>
-               </div>
-             </div>
-           </div>
+          <div className="grid md:grid-cols-2 gap-6 text-left" data-testid="hero-comparison">
+            <div className="p-6 rounded-lg bg-muted/30 border border-border/50">
+              <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-4">Before</div>
+              <p className="font-serif text-xl leading-[1.8] text-foreground">
+                The old man sat quietly by the window and watched the rain fall.
+              </p>
+            </div>
+            <div className="p-6 rounded-lg bg-primary/5 border border-primary/20 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-1 h-full bg-primary/40"></div>
+              <div className="text-xs uppercase tracking-wider text-primary font-semibold mb-4">After</div>
+              <p className="font-serif text-xl leading-[1.8] text-foreground">
+                The old man sat quietly &ensp;by the window &ensp;and watched &ensp;the rain fall.
+              </p>
+            </div>
+          </div>
+        </section>
 
-           {/* 4. Process Button */}
-           <div className="pt-4">
-             <Button 
-               className="w-full font-serif text-lg tracking-wide rounded-sm h-14 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors" 
-               disabled={!file || status === "processing"} 
-               onClick={handleProcess}
-               data-testid="button-process"
-             >
-               {status === "processing" ? (
-                 <span className="flex items-center" data-testid="status-processing">
-                   <Spinner className="mr-3 h-5 w-5" /> Injecting spaces...
-                 </span>
-               ) : (
-                 "Process EPUB"
-               )}
-             </Button>
-           </div>
+        {/* 2. Live Preview */}
+        <section data-testid="section-preview">
+          <Card className="border-border/60 shadow-md bg-card/50 backdrop-blur-sm overflow-hidden" data-testid="card-preview">
+            <div className="bg-muted/30 px-6 py-4 border-b border-border/50 flex justify-between items-center">
+              <h2 className="font-medium text-foreground">Try it — preview before you process</h2>
+              {previewLoading && <Spinner className="h-4 w-4 text-primary" data-testid="preview-spinner" />}
+            </div>
+            <CardContent className="p-6 space-y-8">
+              
+              <div className="space-y-3">
+                <Label htmlFor="preview-text" className="text-sm font-medium text-foreground">Test Text</Label>
+                <Textarea 
+                  id="preview-text"
+                  value={previewText}
+                  onChange={(e) => setPreviewText(e.target.value)}
+                  className="resize-y min-h-[100px] font-serif text-base bg-background"
+                  data-testid="textarea-preview"
+                />
+              </div>
 
-           {/* 5. Status Area & 6. Download Link */}
-           {(status === "error" || status === "success" || fallbackMsg) && (
-             <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-bottom-2 duration-300" data-testid="status-area">
-               {status === "error" && (
-                 <Alert variant="destructive" className="rounded-sm bg-destructive/10 text-destructive border border-destructive/20" data-testid="alert-error">
-                   <AlertCircle className="h-4 w-4" />
-                   <AlertTitle className="font-semibold">Processing Failed</AlertTitle>
-                   <AlertDescription>{errorMsg}</AlertDescription>
-                 </Alert>
-               )}
-               {fallbackMsg && status === "success" && (
-                 <Alert className="rounded-sm bg-amber-500/10 text-amber-900 border border-amber-500/20 dark:bg-amber-500/20 dark:text-amber-200" data-testid="alert-fallback">
-                   <InfoIcon className="h-4 w-4" />
-                   <AlertTitle className="font-semibold">Note</AlertTitle>
-                   <AlertDescription>{fallbackMsg}</AlertDescription>
-                 </Alert>
-               )}
-               {status === "success" && (
-                 <div className="flex flex-col items-center justify-center p-8 bg-primary/5 border border-primary/20 rounded-sm space-y-5" data-testid="area-success">
-                   <div className="flex items-center text-primary font-medium gap-2">
-                     <CheckCircle2 className="h-5 w-5" />
-                     <span>Processing Complete</span>
-                   </div>
-                   <Button asChild variant="outline" className="rounded-sm border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors h-11 px-6" data-testid="link-download">
-                     <a href={downloadUrl} download={downloadFilename}>
-                       <Download className="mr-2 h-4 w-4" /> Download Book
-                     </a>
-                   </Button>
-                 </div>
-               )}
-             </div>
-           )}
-         </CardContent>
-         <CardFooter className="justify-center pb-10 text-xs text-muted-foreground font-serif italic" data-testid="text-footer">
-           For a calm and measured reading experience.
-         </CardFooter>
-      </Card>
+              <div className="grid md:grid-cols-2 gap-8 bg-background p-5 rounded-lg border border-border/40">
+                
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium">Mode</Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button className="text-muted-foreground hover:text-foreground" data-testid="tooltip-mode">
+                            <InfoIcon className="h-4 w-4" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-[250px] p-3 text-sm">
+                          <p><strong>Simple:</strong> Uses structure words.</p>
+                          <p className="mt-1"><strong>Smart:</strong> Uses AI constituency parsing (falls back if unavailable).</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <RadioGroup 
+                      value={state.mode} 
+                      onValueChange={(v: "simple" | "smart") => setState({ ...state, mode: v })} 
+                      className="flex gap-4"
+                      data-testid="radio-mode"
+                    >
+                      <div className="flex items-center space-x-2 bg-muted/20 px-3 py-2 rounded-md border border-border/50">
+                        <RadioGroupItem value="simple" id="mode-simple" />
+                        <Label htmlFor="mode-simple" className="cursor-pointer">Simple</Label>
+                      </div>
+                      <div className="flex items-center space-x-2 bg-muted/20 px-3 py-2 rounded-md border border-border/50">
+                        <RadioGroupItem value="smart" id="mode-smart" />
+                        <Label htmlFor="mode-smart" className="cursor-pointer">Smart</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Language</Label>
+                    <Select value={state.language} onValueChange={(v) => setState({ ...state, language: v })} data-testid="select-language">
+                      <SelectTrigger className="w-full bg-background">
+                        <SelectValue placeholder="Auto-detect" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="auto">Auto-detect</SelectItem>
+                        <SelectItem value="en">English</SelectItem>
+                        <SelectItem value="es">Spanish</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-8">
+                  <div className="space-y-4">
+                    <div className="flex justify-between">
+                      <Label className="text-sm font-medium">Spacing Width</Label>
+                      <span className="text-xs text-muted-foreground">{getSpacingLabel(state.spacingWidth)}</span>
+                    </div>
+                    <Slider 
+                      value={[state.spacingWidth]} 
+                      max={2} 
+                      step={1} 
+                      onValueChange={(v) => setState({ ...state, spacingWidth: v[0] })}
+                      data-testid="slider-spacing"
+                    />
+                    <div className="flex justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
+                      <span>Subtle</span>
+                      <span>Medium</span>
+                      <span>Strong</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex justify-between">
+                      <Label className="text-sm font-medium">Chunk Density</Label>
+                      <span className="text-xs text-muted-foreground">{getDensityLabel(state.chunkDensity)}</span>
+                    </div>
+                    <Slider 
+                      value={[state.chunkDensity]} 
+                      max={2} 
+                      step={1} 
+                      onValueChange={(v) => setState({ ...state, chunkDensity: v[0] })}
+                      data-testid="slider-density"
+                    />
+                    <div className="flex justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
+                      <span>Subtle</span>
+                      <span>Medium</span>
+                      <span>Obvious</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium text-foreground">Result</Label>
+                  <div className="flex items-center gap-2">
+                    {previewModeUsed && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20" data-testid="badge-mode-used">
+                        Mode: {previewModeUsed}
+                      </span>
+                    )}
+                    {previewModeUsed && state.mode === 'smart' && !previewModeUsed.includes('smart') && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/20" data-testid="badge-mode-fallback">
+                        Fallback used
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div 
+                  className="min-h-[120px] p-6 rounded-lg bg-background border border-border/60 font-serif text-[1.1rem] leading-[1.75] text-foreground shadow-inner whitespace-pre-wrap transition-opacity duration-200"
+                  style={{ opacity: previewLoading ? 0.5 : 1 }}
+                  data-testid="preview-output"
+                >
+                  {previewResult || <span className="text-muted-foreground italic">Preview will appear here...</span>}
+                </div>
+              </div>
+
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* 3. Upload & Process */}
+        <section data-testid="section-process">
+          <div className="space-y-6">
+            <h2 className="font-serif text-3xl font-medium text-foreground" data-testid="heading-process">Process your EPUB</h2>
+            
+            <div className="flex flex-col md:flex-row gap-6">
+              
+              <div className="flex-1 space-y-4">
+                <div 
+                  className={`border-2 border-dashed flex flex-col items-center justify-center p-10 text-center cursor-pointer transition-colors rounded-xl ${file ? 'border-primary bg-primary/5' : 'border-border/60 hover:border-primary/40 hover:bg-muted/30 bg-background'}`}
+                  onClick={() => document.getElementById('epub-upload')?.click()}
+                  data-testid="upload-area"
+                >
+                  <input 
+                    id="epub-upload" 
+                    type="file" 
+                    accept=".epub" 
+                    className="hidden" 
+                    onChange={handleFileChange}
+                    data-testid="input-file"
+                  />
+                  {file ? (
+                    <div className="flex flex-col items-center space-y-3">
+                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                        <FileText className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">{file.name}</p>
+                        <p className="text-sm text-muted-foreground mt-0.5">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center space-y-4">
+                      <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                        <UploadCloud className="h-6 w-6" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="font-medium text-foreground">Click to browse or drag .epub</p>
+                        <p className="text-sm text-muted-foreground">DRM-free EPUBs only</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex items-center gap-3 text-sm text-muted-foreground bg-muted/30 px-4 py-3 rounded-lg border border-border/40" data-testid="settings-recap">
+                  <InfoIcon className="h-4 w-4 shrink-0" />
+                  <span>
+                    Using: <strong className="text-foreground capitalize">{state.mode}</strong> mode, <strong className="text-foreground">{getSpacingLabel(state.spacingWidth).toLowerCase()}</strong> spacing, <strong className="text-foreground">{getDensityLabel(state.chunkDensity).toLowerCase()}</strong> density ({state.language === 'auto' ? 'auto-detect language' : state.language}).
+                  </span>
+                </div>
+              </div>
+
+              <div className="md:w-[280px] shrink-0 flex flex-col justify-end space-y-4">
+                <Button 
+                  className="w-full h-14 text-lg font-medium shadow-md rounded-xl" 
+                  size="lg"
+                  disabled={!file || status === "processing"} 
+                  onClick={handleProcess}
+                  data-testid="button-process"
+                >
+                  {status === "processing" ? (
+                    <span className="flex items-center">
+                      <Spinner className="mr-3 h-5 w-5" /> Processing...
+                    </span>
+                  ) : (
+                    "Process Book"
+                  )}
+                </Button>
+              </div>
+
+            </div>
+
+            {/* Status Messages */}
+            {(status === "error" || status === "success" || fallbackMsg) && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300 pt-4" data-testid="status-area">
+                {status === "error" && (
+                  <Alert variant="destructive" className="rounded-lg shadow-sm">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Processing Failed</AlertTitle>
+                    <AlertDescription>{errorMsg}</AlertDescription>
+                  </Alert>
+                )}
+                {fallbackMsg && status === "success" && (
+                  <Alert className="rounded-lg bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-950/30 dark:text-amber-200 dark:border-amber-900/50">
+                    <InfoIcon className="h-4 w-4" />
+                    <AlertTitle>Note</AlertTitle>
+                    <AlertDescription>{fallbackMsg}</AlertDescription>
+                  </Alert>
+                )}
+                {status === "success" && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between p-6 bg-primary/5 border border-primary/20 rounded-xl shadow-sm gap-4" data-testid="area-success">
+                    <div className="flex items-center text-primary font-medium gap-3">
+                      <CheckCircle2 className="h-6 w-6" />
+                      <span className="text-lg">Ready for Kindle</span>
+                    </div>
+                    <Button asChild className="rounded-lg shadow-sm" size="lg" data-testid="link-download">
+                      <a href={downloadUrl} download={downloadFilename}>
+                        <Download className="mr-2 h-4 w-4" /> Download Book
+                      </a>
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+
+        <div className="grid md:grid-cols-2 gap-12 pt-8 border-t border-border/50">
+          {/* 4. How to use */}
+          <section className="space-y-4" data-testid="section-how-to">
+            <h3 className="font-serif text-2xl text-foreground">How to use</h3>
+            <ol className="space-y-4 list-decimal list-outside ml-4 text-muted-foreground leading-relaxed">
+              <li className="pl-2"><strong className="text-foreground font-medium">Upload a DRM-free EPUB.</strong> If your book has DRM, you'll need to remove it first.</li>
+              <li className="pl-2"><strong className="text-foreground font-medium">Pick a mode and adjust the sliders.</strong> Use the live preview above to find the rhythm that feels best for your eyes.</li>
+              <li className="pl-2"><strong className="text-foreground font-medium">Download and send to your Kindle.</strong> Transfer via USB or Send to Kindle.</li>
+            </ol>
+          </section>
+
+          {/* 5. The science */}
+          <section className="space-y-4" data-testid="section-science">
+            <h3 className="font-serif text-2xl text-foreground">The science</h3>
+            <p className="text-muted-foreground leading-relaxed text-sm">
+              PhraseFlow is grounded in decades of reading research on chunking and phrase-based reading. Visual-Syntactic Text Formatting studies (Walker et al., 2005; Park & Warschauer, 2016) show that segmenting text at clause and phrase boundaries, sized to the eye's natural fixation span of roughly 8 to 30 characters, can improve comprehension and reduce eyestrain. The eye takes in only about 9 to 15 characters per fixation (Legge et al., 1997), and breaks that mirror natural speech prosody aid processing (Hirotani, Frazier & Rayner, 2006). The evidence is promising but not universal, and what helps varies from reader to reader, which is why the spacing is adjustable. This is a reading aid, not a medical device.
+            </p>
+          </section>
+        </div>
+
+        {/* 6. Why it exists */}
+        <section className="bg-muted/30 p-8 md:p-12 rounded-2xl border border-border/50 text-center space-y-6" data-testid="section-why">
+          <h3 className="font-serif text-2xl text-foreground">Why it exists</h3>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            Fluent readers don't read one word at a time; they take in meaningful phrases per glance. PhraseFlow rebuilds your EPUBs to gently cue those phrase groups with spacing: a free, open tool that works on the device where people actually read.
+          </p>
+        </section>
+
+      </main>
+
+      {/* 7. Footer */}
+      <footer className="max-w-3xl mx-auto px-6 mt-24 pb-8 text-center space-y-2 border-t border-border/30 pt-8" data-testid="footer">
+        <p className="text-sm text-foreground">
+          Free and open on <a href="https://github.com" className="underline underline-offset-4 decoration-border hover:text-primary hover:decoration-primary transition-colors">GitHub</a>. Contributions and evidence welcome.
+        </p>
+        <p className="text-xs text-muted-foreground/70">
+          PhraseFlow — a reading aid, not a medical device.
+        </p>
+      </footer>
+
     </div>
   );
 }

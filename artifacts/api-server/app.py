@@ -1,28 +1,34 @@
 """
-Phrase-Spacing EPUB Injector — Flask backend.
+PhraseFlow — Flask backend.
 
 Routes:
-  GET  /api/healthz       — liveness probe
-  POST /api/process       — upload EPUB, return processed EPUB
+  GET  /api/healthz    — liveness probe
+  POST /api/preview    — preview spacing on a plain-text snippet (fast, no EPUB)
+  POST /api/process    — upload EPUB, return processed EPUB
 """
 
+import io
 import os
+import shutil
 import tempfile
 import traceback
 from pathlib import Path
 
 from flask import Flask, jsonify, request, send_file
 
-from epub_processor import is_drm_protected, process_epub, spacy_available
+from epub_processor import (
+    detect_language,
+    is_drm_protected,
+    preview_text,
+    process_epub,
+)
 
 app = Flask(__name__)
-
-# Max upload size: 50 MB
-app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
+app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024  # 50 MB
 
 
 # ---------------------------------------------------------------------------
-# CORS — allow the Vite dev server and the production proxy
+# CORS
 # ---------------------------------------------------------------------------
 
 @app.after_request
@@ -30,10 +36,29 @@ def add_cors(response):
     origin = request.headers.get("Origin", "")
     response.headers["Access-Control-Allow-Origin"] = origin or "*"
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
     response.headers["Access-Control-Allow-Credentials"] = "true"
     return response
 
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+_VALID_MODES = {"simple", "smart"}
+_VALID_WIDTHS = {"subtle", "medium", "strong"}
+_VALID_DENSITIES = {"subtle", "medium", "obvious"}
+_VALID_LANGS = {"auto", "en", "es"}
+
+
+def _safe(value: str, allowed: set, default: str) -> str:
+    v = (value or "").strip().lower()
+    return v if v in allowed else default
+
+
+# ---------------------------------------------------------------------------
+# Healthz
+# ---------------------------------------------------------------------------
 
 @app.route("/api/healthz", methods=["GET", "OPTIONS"])
 def healthz():
@@ -43,7 +68,34 @@ def healthz():
 
 
 # ---------------------------------------------------------------------------
-# Main processing endpoint
+# /api/preview — plain-text spacing preview
+# ---------------------------------------------------------------------------
+
+@app.route("/api/preview", methods=["POST", "OPTIONS"])
+def preview():
+    if request.method == "OPTIONS":
+        return "", 204
+
+    data = request.get_json(silent=True) or {}
+    text = str(data.get("text", ""))[:2000]  # cap input
+    mode = _safe(data.get("mode", "simple"), _VALID_MODES, "simple")
+    spacing_width = _safe(data.get("spacing_width", "subtle"), _VALID_WIDTHS, "subtle")
+    chunk_density = _safe(data.get("chunk_density", "subtle"), _VALID_DENSITIES, "subtle")
+    language = _safe(data.get("language", "auto"), _VALID_LANGS, "auto")
+
+    if not text.strip():
+        return jsonify({"result": "", "mode_used": mode})
+
+    try:
+        result, mode_used = preview_text(text, mode, spacing_width, chunk_density, language)
+        return jsonify({"result": result, "mode_used": mode_used})
+    except Exception:
+        traceback.print_exc()
+        return jsonify({"error": "Preview failed."}), 500
+
+
+# ---------------------------------------------------------------------------
+# /api/process — EPUB upload → processed EPUB download
 # ---------------------------------------------------------------------------
 
 @app.route("/api/process", methods=["POST", "OPTIONS"])
@@ -51,28 +103,21 @@ def process():
     if request.method == "OPTIONS":
         return "", 204
 
-    # --- validate inputs ---
     if "file" not in request.files:
         return jsonify({"error": "No file uploaded."}), 400
 
     file = request.files["file"]
     if not file.filename:
         return jsonify({"error": "Empty filename."}), 400
+    if not file.filename.lower().endswith(".epub"):
+        return jsonify({"error": "Please upload an EPUB file (.epub)."}), 400
 
-    name_lower = file.filename.lower()
-    if not name_lower.endswith(".epub"):
-        return jsonify({"error": "Please upload an EPUB file (.epub extension required)."}), 400
+    mode = _safe(request.form.get("mode", "simple"), _VALID_MODES, "simple")
+    spacing_width = _safe(request.form.get("spacing_width", "subtle"), _VALID_WIDTHS, "subtle")
+    chunk_density = _safe(request.form.get("chunk_density", "subtle"), _VALID_DENSITIES, "subtle")
+    language = _safe(request.form.get("language", "auto"), _VALID_LANGS, "auto")
 
-    mode = request.form.get("mode", "simple").lower().strip()
-    if mode not in ("simple", "smart"):
-        mode = "simple"
-
-    intensity = request.form.get("intensity", "medium").lower().strip()
-    if intensity not in ("subtle", "medium", "strong"):
-        intensity = "medium"
-
-    # --- work in a temp directory that is always cleaned up ---
-    tmp_dir = tempfile.mkdtemp(prefix="epub_injector_")
+    tmp_dir = tempfile.mkdtemp(prefix="phraseflow_")
     try:
         input_path = os.path.join(tmp_dir, "input.epub")
         file.save(input_path)
@@ -82,49 +127,54 @@ def process():
             if is_drm_protected(input_path):
                 return jsonify({
                     "error": (
-                        "This EPUB appears to be DRM-protected. "
-                        "Phrase-Spacing EPUB Injector only works with DRM-free books. "
-                        "Please use a DRM-free copy."
+                        "This EPUB is DRM-protected. PhraseFlow only works with "
+                        "DRM-free books. Please use a DRM-free copy."
                     )
                 }), 422
         except Exception:
-            return jsonify({"error": "Could not read the EPUB file. Please check it is a valid EPUB."}), 400
+            return jsonify({"error": "Could not read the EPUB. Please check it is a valid, unencrypted EPUB file."}), 400
 
-        # Process
-        fell_back = False
         try:
-            epub_bytes, fell_back = process_epub(input_path, mode, intensity)
+            epub_bytes, mode_used = process_epub(
+                input_path, mode, spacing_width, chunk_density, language
+            )
         except Exception:
             traceback.print_exc()
             return jsonify({"error": "Processing failed. The file may be malformed."}), 500
 
-        # Build output filename
         stem = Path(file.filename).stem
-        out_filename = f"{stem}_phrase_spaced.epub"
-
-        # Stream the result back
-        import io
+        out_filename = f"{stem}_phraseflow.epub"
         buf = io.BytesIO(epub_bytes)
         buf.seek(0)
 
-        response = send_file(
+        resp = send_file(
             buf,
             mimetype="application/epub+zip",
             as_attachment=True,
             download_name=out_filename,
         )
 
-        if fell_back:
-            response.headers["X-Fallback-Warning"] = (
-                "Smart mode was requested but the spaCy model could not be loaded. "
-                "Simple mode was used instead."
-            )
+        if mode_used != mode:
+            resp.headers["X-Fallback-Warning"] = _fallback_message(mode, mode_used)
 
-        return response
+        return resp
 
     finally:
-        import shutil
         shutil.rmtree(tmp_dir, ignore_errors=True)
+
+
+def _fallback_message(requested: str, actual: str) -> str:
+    if requested == "smart" and actual == "smart_dep":
+        return (
+            "The constituency parser (benepar) was not available; "
+            "phrase boundaries were detected using the dependency parser instead."
+        )
+    if requested == "smart" and actual == "simple":
+        return (
+            "Smart mode was unavailable (spaCy model could not be loaded); "
+            "Simple mode was used instead."
+        )
+    return f"Mode requested: {requested}. Mode used: {actual}."
 
 
 # ---------------------------------------------------------------------------

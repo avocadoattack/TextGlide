@@ -1,6 +1,6 @@
-# [Project name]
+# PhraseFlow
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+PhraseFlow inserts subtle Unicode spacing at natural phrase boundaries in DRM-free EPUBs, so readers' eyes group words the way fluent readers already do, then returns a Kindle-ready file.
 
 ## Run & Operate
 
