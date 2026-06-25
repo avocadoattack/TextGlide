@@ -36,14 +36,18 @@ function isFallbackMode(modeUsed: string): boolean {
   return modeUsed === "keyword_fallback";
 }
 
-// Faint amber underline marker placed at each inserted gap in the hero After card
+// Amber gap marker for the hero After card — deliberately more pronounced than
+// real reading output, so a first-time visitor instantly sees what the tool does.
 function Gap() {
   return (
     <span
       style={{
         display: "inline-block",
-        borderBottom: "1.5px solid rgba(251,191,36,0.55)",
-        paddingBottom: "1px",
+        minWidth: "0.5em",
+        borderBottom: "2px solid rgba(251, 191, 36, 0.85)",
+        backgroundColor: "rgba(251, 191, 36, 0.13)",
+        verticalAlign: "baseline",
+        borderRadius: "1px 1px 0 0",
       }}
     >
       {"\u2009"}
