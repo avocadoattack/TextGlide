@@ -275,23 +275,22 @@ _OBVIOUS_DEP_LABELS = frozenset({"attr", "appos", "dobj", "nsubj", "nsubjpass"})
 
 def _breaks_dep(sent, level: int, forbidden: set[int]) -> set[int]:
     breaks: set[int] = set()
-    prev_i = sent.start
     for tok in sent:
         if tok.i == sent.start:
             continue
         if tok.i in forbidden:
             continue
         d = tok.dep_
-        # CC (coordinating conjunction) at clause level: break AFTER the CC
+        # CC (coordinating conjunction) at clause level: break before the following token
         if tok.pos_ == "CCONJ" and tok.head.dep_ in ("ROOT", "conj"):
-            # break before the following token
             if tok.i + 1 < sent.end:
                 nxt = tok.i + 1
                 if nxt not in forbidden:
                     breaks.add(nxt)
             continue
-        if d in _MAJOR_DEP_LABELS and tok.i == tok.head.i - 1:
-            # head is immediately to the right: break before tok
+        # Major clause/phrase boundaries — break before this token.
+        # ROOT is excluded (it is the main predicate, not a subordinate clause).
+        if d in _MAJOR_DEP_LABELS and d != "ROOT":
             breaks.add(tok.i)
         elif level >= 2 and d in _MEDIUM_DEP_LABELS:
             breaks.add(tok.i)
