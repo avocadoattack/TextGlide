@@ -37,7 +37,7 @@ GAP_CHARS: dict[str, str] = {
 # boundary_level: 1=major only, 2=major+PP, 3=major+PP+NP
 DENSITY_CFG: dict[str, dict] = {
     "subtle":  {"min_chars": 22, "level": 1},
-    "medium":  {"min_chars": 12, "level": 2},
+    "medium":  {"min_chars": 14, "level": 2},
     "obvious": {"min_chars":  7, "level": 3},
 }
 
@@ -150,27 +150,74 @@ def get_smart_status(lang: str) -> str:
 # ---------------------------------------------------------------------------
 
 def _forbidden_breaks(tokens: list) -> set[int]:
-    """Return absolute token indices before which a break is forbidden."""
+    """
+    Return absolute token indices before which a break is NEVER allowed.
+
+    Glued-unit pairs — we forbid a break immediately before `tok` when the
+    preceding token (`prev`) participates in one of these relationships:
+
+      det        → governed noun/adj          ("the book")
+      advmod     → governed verb/adj          ("gently cue", "actually read")
+      aux/auxpass→ governed verb              ("will come", "was written")
+      neg        → following token            ("don't read")
+      prt / compound:prt → verb particle     ("pick up")
+      mark "to"  → the token after "to"      ("to gently cue" — don't break into the VP)
+      ADP (prep) → directly following obj    (don't orphan a bare preposition)
+      nummod     → governed noun             ("three cats")
+      amod       → governed noun             ("free open tool")
+      compound/nn→ governed noun             ("phrase groups")
+      poss       → governed noun             ("reader's eye")
+    """
     forbidden: set[int] = set()
     for i, tok in enumerate(tokens):
         if i == 0:
             continue
         prev = tokens[i - 1]
-        # DET → immediately governing noun/adj
+
+        # det → noun/adj
         if prev.dep_ == "det" and prev.head == tok:
             forbidden.add(tok.i)
-        # Infinitival "to" → verb
-        if prev.tag_ == "TO" and tok.tag_.startswith("VB"):
+
+        # advmod → its head verb/adj (KEY FIX: prevents "gently  cue", "actually  read")
+        if prev.dep_ == "advmod" and prev.head == tok:
             forbidden.add(tok.i)
-        # Auxiliary → its head verb
+
+        # aux / auxpass → head verb
         if prev.dep_ in ("aux", "auxpass") and prev.head == tok:
             forbidden.add(tok.i)
-        # Negation → following token
+
+        # neg → following token
         if prev.dep_ == "neg":
             forbidden.add(tok.i)
-        # Preposition → first token of its object (don't orphan a bare preposition)
+
+        # verb particle
+        if prev.dep_ in ("prt", "compound:prt"):
+            forbidden.add(tok.i)
+
+        # infinitival "to": don't break between "to" and what follows it
+        if prev.dep_ == "mark" and prev.text.lower() == "to":
+            forbidden.add(tok.i)
+
+        # bare preposition → its object (never orphan a preposition)
         if prev.pos_ == "ADP" and tok.dep_ in ("pobj", "dobj", "nmod"):
             forbidden.add(tok.i)
+
+        # nummod → noun
+        if prev.dep_ == "nummod" and prev.head == tok:
+            forbidden.add(tok.i)
+
+        # amod → noun ("free, open tool")
+        if prev.dep_ == "amod" and prev.head == tok:
+            forbidden.add(tok.i)
+
+        # compound / nn → noun ("phrase groups", "noun phrase")
+        if prev.dep_ in ("compound", "nn") and prev.head == tok:
+            forbidden.add(tok.i)
+
+        # possessive → noun ("reader's eye")
+        if prev.dep_ in ("poss", "possessive") and prev.head == tok:
+            forbidden.add(tok.i)
+
     return forbidden
 
 
@@ -264,38 +311,84 @@ def _breaks_benepar(sent, level: int, forbidden: set[int]) -> set[int]:
 # Dependency-parse fallback chunker
 # ---------------------------------------------------------------------------
 
-# dep labels that begin a major clause/phrase
-_MAJOR_DEP_LABELS = frozenset({
-    "ROOT", "ccomp", "xcomp", "advcl", "relcl", "acl",
-    "conj", "parataxis",
+# dep labels that are valid break points at ALL density levels (level 1+)
+_BREAK_L1 = frozenset({
+    "prep",          # prepositional phrase boundary (break before the whole PP)
+    "advcl",         # adverbial clause ("while the city came awake")
+    "relcl",         # relative clause  ("that works on the device")
+    "ccomp",         # clausal complement ("I know that he came")
+    "xcomp",         # open clausal complement ("to gently cue")
+    "conj",          # coordinated clause ("they take in")
+    "cc",            # coordinating conjunction itself ("and", "but")
+    "mark",          # subordinating conjunction / clause introducer
+                     # (infinitival "to" is handled by _forbidden_breaks instead)
 })
-_MEDIUM_DEP_LABELS = frozenset({"prep", "pcomp", "npadvmod"})
-_OBVIOUS_DEP_LABELS = frozenset({"attr", "appos", "dobj", "nsubj", "nsubjpass"})
+
+# Punctuation tokens that open a new clause — we break AFTER them
+_CLAUSE_PUNCT = frozenset({";", ":", ","})
+
+
+_CLAUSE_DEPS = frozenset({"advcl", "relcl", "ccomp", "xcomp", "conj"})
 
 
 def _breaks_dep(sent, level: int, forbidden: set[int]) -> set[int]:
+    """
+    Insert a break before a token when:
+      1. Its dep label is in the positive set for the current level, AND
+      2. The chosen break position is not in the forbidden set, AND
+      3. The left-chunk min-chars guardrail (applied later) is satisfied.
+
+    Break-position rule:
+      For clause-introducing deps (advcl, relcl, ccomp, xcomp, conj) we break
+      before tok.left_edge — the leftmost token of the whole clause subtree —
+      rather than before the clause head.  This ensures the relative pronoun
+      ("that"), subject ("they"), or subordinator ("while") stays with the
+      clause it introduces, rather than being orphaned to the left of the break.
+
+    Positive rules by level:
+      L1 (subtle)  : advcl, relcl, ccomp, xcomp, conj (left_edge)
+                     + prep, cc, mark (tok itself)
+                     + clause-opening punctuation (; : ,) → break after
+      L2 (medium)  : same as L1
+      L3 (obvious) : same as L2 + nsubj/nsubjpass when head is ROOT
+    """
     breaks: set[int] = set()
+
     for tok in sent:
         if tok.i == sent.start:
             continue
+
+        d = tok.dep_
+
+        # Clause-opening punctuation: break AFTER the punct (before next token)
+        if d == "punct" and tok.text in _CLAUSE_PUNCT:
+            nxt = tok.i + 1
+            if nxt < sent.end and nxt not in forbidden:
+                breaks.add(nxt)
+            continue
+
         if tok.i in forbidden:
             continue
-        d = tok.dep_
-        # CC (coordinating conjunction) at clause level: break before the following token
-        if tok.pos_ == "CCONJ" and tok.head.dep_ in ("ROOT", "conj"):
-            if tok.i + 1 < sent.end:
-                nxt = tok.i + 1
-                if nxt not in forbidden:
-                    breaks.add(nxt)
+
+        # Clause-level deps: break at the leftmost token of the subtree
+        if d in _CLAUSE_DEPS:
+            edge_i = tok.left_edge.i
+            if edge_i == sent.start:
+                # entire subtree starts the sentence — no useful break
+                continue
+            if edge_i not in forbidden:
+                breaks.add(edge_i)
             continue
-        # Major clause/phrase boundaries — break before this token.
-        # ROOT is excluded (it is the main predicate, not a subordinate clause).
-        if d in _MAJOR_DEP_LABELS and d != "ROOT":
+
+        # Remaining L1+ labels: break before tok itself
+        if d in _BREAK_L1:
             breaks.add(tok.i)
-        elif level >= 2 and d in _MEDIUM_DEP_LABELS:
+            continue
+
+        # L3 only: subject→predicate boundary when head is ROOT
+        if level >= 3 and d in ("nsubj", "nsubjpass") and tok.head.dep_ == "ROOT":
             breaks.add(tok.i)
-        elif level >= 3 and d in _OBVIOUS_DEP_LABELS:
-            breaks.add(tok.i)
+
     return breaks
 
 
