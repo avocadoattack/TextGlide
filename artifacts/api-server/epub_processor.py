@@ -229,27 +229,39 @@ def _apply_min_chars(
     raw_breaks: set[int],
     tokens: list,
     min_chars: int,
+    forced: set[int] = frozenset(),
 ) -> set[int]:
-    """Remove break points that would leave a chunk shorter than min_chars chars."""
-    if not raw_breaks:
-        return raw_breaks
+    """
+    Remove soft break points that would leave a chunk shorter than min_chars chars.
+
+    `forced` break positions (e.g. after semicolons/colons) are ALWAYS kept and
+    reset the chunk counter so subsequent min-chars measurements start fresh from
+    the forced break, not from the beginning of the sentence.
+    """
+    all_breaks = raw_breaks | forced
+    if not all_breaks:
+        return set()
+
     sent_start = tokens[0].i
     n = len(tokens)
-    rel = sorted(b - sent_start for b in raw_breaks)
-    boundaries = [0] + rel + [n]
+    all_rel = sorted(b - sent_start for b in all_breaks)
+    boundaries = [0] + all_rel + [n]
 
     result: list[int] = []
     pending = 0
     for idx in range(1, len(boundaries)):
         end = boundaries[idx]
+        if end == n:
+            break
+        abs_pos = end + sent_start
+        is_forced = abs_pos in forced
         chunk_text = "".join(
             t.text + t.whitespace_ for t in tokens[pending:end]
         ).strip()
-        if len(chunk_text) >= min_chars or end == n:
-            if end != n:
-                result.append(end + sent_start)
+        if is_forced or len(chunk_text) >= min_chars:
+            result.append(abs_pos)
             pending = end
-        # else: chunk too short, merge with next
+        # else: soft break, chunk too short — merge into the next chunk
 
     return set(result)
 
@@ -308,6 +320,25 @@ def _breaks_benepar(sent, level: int, forbidden: set[int]) -> set[int]:
 
 
 # ---------------------------------------------------------------------------
+# Forced punctuation breaks (always bypass min-chars guardrail)
+# ---------------------------------------------------------------------------
+
+def _forced_breaks_punct(sent, forbidden: set[int]) -> set[int]:
+    """
+    Semicolons and colons always open a new clause.  Return the position of the
+    first token AFTER each such punctuation mark as a forced break — these are
+    never suppressed by the min-chars guardrail.
+    """
+    forced: set[int] = set()
+    for tok in sent:
+        if tok.dep_ == "punct" and tok.text in (";", ":"):
+            nxt = tok.i + 1
+            if nxt < sent.end and nxt not in forbidden:
+                forced.add(nxt)
+    return forced
+
+
+# ---------------------------------------------------------------------------
 # Dependency-parse fallback chunker
 # ---------------------------------------------------------------------------
 
@@ -323,9 +354,6 @@ _BREAK_L1 = frozenset({
     "mark",          # subordinating conjunction / clause introducer
                      # (infinitival "to" is handled by _forbidden_breaks instead)
 })
-
-# Punctuation tokens that open a new clause — we break AFTER them
-_CLAUSE_PUNCT = frozenset({";", ":", ","})
 
 
 _CLAUSE_DEPS = frozenset({"advcl", "relcl", "ccomp", "xcomp", "conj"})
@@ -348,9 +376,11 @@ def _breaks_dep(sent, level: int, forbidden: set[int]) -> set[int]:
     Positive rules by level:
       L1 (subtle)  : advcl, relcl, ccomp, xcomp, conj (left_edge)
                      + prep, cc, mark (tok itself)
-                     + clause-opening punctuation (; : ,) → break after
       L2 (medium)  : same as L1
       L3 (obvious) : same as L2 + nsubj/nsubjpass when head is ROOT
+
+    Semicolons and colons are handled separately by _forced_breaks_punct
+    and always bypass the min-chars guardrail.
     """
     breaks: set[int] = set()
 
@@ -359,13 +389,6 @@ def _breaks_dep(sent, level: int, forbidden: set[int]) -> set[int]:
             continue
 
         d = tok.dep_
-
-        # Clause-opening punctuation: break AFTER the punct (before next token)
-        if d == "punct" and tok.text in _CLAUSE_PUNCT:
-            nxt = tok.i + 1
-            if nxt < sent.end and nxt not in forbidden:
-                breaks.add(nxt)
-            continue
 
         if tok.i in forbidden:
             continue
@@ -469,6 +492,8 @@ def _patch_smart(text: str, gap: str, density: str, lang: str) -> tuple[str, str
             continue
         forbidden = _forbidden_breaks(tokens)
 
+        forced = _forced_breaks_punct(sent, forbidden)
+
         if state.has_benepar:
             try:
                 raw_breaks = _breaks_benepar(sent, level, forbidden)
@@ -478,7 +503,7 @@ def _patch_smart(text: str, gap: str, density: str, lang: str) -> tuple[str, str
         else:
             raw_breaks = _breaks_dep(sent, level, forbidden)
 
-        breaks = _apply_min_chars(raw_breaks, tokens, min_chars)
+        breaks = _apply_min_chars(raw_breaks, tokens, min_chars, forced)
         result_parts.append(_insert_gaps(tokens, breaks, gap))
         # preserve trailing whitespace after sentence
         if sent.end < len(doc) and doc[sent.end - 1].whitespace_:

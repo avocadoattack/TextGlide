@@ -27,7 +27,9 @@ function friendlyMode(modeUsed: string): string {
 
 function isFallbackMode(requestedMode: string, modeUsed: string): boolean {
   if (requestedMode !== "smart") return false;
-  return modeUsed !== "smart_benepar";
+  // Amber warning only when Smart fell all the way back to Simple.
+  // smart_dep is a fully capable tier — show plain "Smart mode" badge for it.
+  return modeUsed === "simple";
 }
 
 function Home() {
@@ -581,46 +583,77 @@ function Home() {
           </div>
         </section>
 
-        <div className="grid md:grid-cols-2 gap-12 pt-8 border-t border-border/50">
-          {/* 4. How to use */}
-          <section className="space-y-4" data-testid="section-how-to">
-            <h3 className="font-serif text-2xl text-foreground">How to use</h3>
-            <ol className="space-y-4 list-decimal list-outside ml-4 text-muted-foreground leading-relaxed">
-              <li className="pl-2">
-                <strong className="text-foreground font-medium">Upload a DRM-free EPUB.</strong>{" "}
-                If your book has DRM, you'll need to remove it first.
-              </li>
-              <li className="pl-2">
-                <strong className="text-foreground font-medium">
-                  Pick a mode and adjust the sliders.
-                </strong>{" "}
+        {/* 4. How to use — full-width 3-column */}
+        <section className="pt-8 border-t border-border/50 space-y-6" data-testid="section-how-to">
+          <h3 className="font-serif text-2xl text-foreground">How to use</h3>
+          <div className="grid sm:grid-cols-3 gap-6">
+            <div className="bg-muted/30 border border-border/40 rounded-xl p-6 space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm">1</span>
+                <strong className="text-foreground font-medium">Upload a DRM-free EPUB</strong>
+              </div>
+              <p className="text-muted-foreground leading-relaxed text-sm">
+                If your book has DRM, you'll need to remove it first. PhraseFlow only works with
+                unencrypted files.
+              </p>
+            </div>
+            <div className="bg-muted/30 border border-border/40 rounded-xl p-6 space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm">2</span>
+                <strong className="text-foreground font-medium">Pick a mode and adjust the sliders</strong>
+              </div>
+              <p className="text-muted-foreground leading-relaxed text-sm">
                 Use the live preview above to find the rhythm that feels best for your eyes.
-              </li>
-              <li className="pl-2">
-                <strong className="text-foreground font-medium">
-                  Download and send to your Kindle.
-                </strong>{" "}
-                Transfer via USB or Send to Kindle.
-              </li>
-            </ol>
-          </section>
+                Smart mode uses grammar-aware phrase detection; Simple uses keyword rules.
+              </p>
+            </div>
+            <div className="bg-muted/30 border border-border/40 rounded-xl p-6 space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm">3</span>
+                <strong className="text-foreground font-medium">Download and send to your Kindle</strong>
+              </div>
+              <p className="text-muted-foreground leading-relaxed text-sm">
+                Transfer via USB cable or use Send to Kindle. Your original file is untouched —
+                you can always re-process with different settings.
+              </p>
+            </div>
+          </div>
+        </section>
 
-          {/* 5. The science */}
-          <section className="space-y-4" data-testid="section-science">
-            <h3 className="font-serif text-2xl text-foreground">The science</h3>
-            <p className="text-muted-foreground leading-relaxed text-sm">
-              PhraseFlow is grounded in decades of reading research on chunking and phrase-based
-              reading. Visual-Syntactic Text Formatting studies (Walker et al., 2005; Park &
-              Warschauer, 2016) show that segmenting text at clause and phrase boundaries, sized to
-              the eye's natural fixation span of roughly 8 to 30 characters, can improve
-              comprehension and reduce eyestrain. The eye takes in only about 9 to 15 characters per
-              fixation (Legge et al., 1997), and breaks that mirror natural speech prosody aid
-              processing (Hirotani, Frazier &amp; Rayner, 2006). The evidence is promising but not
-              universal, and what helps varies from reader to reader, which is why the spacing is
-              adjustable. This is a reading aid, not a medical device.
-            </p>
-          </section>
-        </div>
+        {/* 5. The science — full-width, 2-column */}
+        <section className="pt-8 border-t border-border/50 space-y-6" data-testid="section-science">
+          <h3 className="font-serif text-2xl text-foreground">The science</h3>
+          <div className="grid md:grid-cols-2 gap-10">
+            <div className="space-y-4 text-muted-foreground leading-relaxed">
+              <p>
+                PhraseFlow is grounded in decades of reading research on chunking and phrase-based
+                reading. Visual-Syntactic Text Formatting (VSTF) studies show that segmenting text
+                at clause and phrase boundaries, sized to the eye's natural fixation span of roughly
+                8 to 30 characters, can improve comprehension and reduce eyestrain.
+              </p>
+              <p>
+                The eye takes in only about 9 to 15 characters per fixation, and breaks that mirror
+                natural speech prosody aid processing. The evidence is promising but not universal —
+                what helps varies from reader to reader, which is why the spacing is adjustable.
+              </p>
+            </div>
+            <div className="space-y-4 text-muted-foreground leading-relaxed">
+              <div className="space-y-2">
+                <p className="font-medium text-foreground text-sm uppercase tracking-wide">Key references</p>
+                <ul className="space-y-1.5 text-sm">
+                  <li>Walker et al. (2005) — Visual-Syntactic Text Formatting</li>
+                  <li>Park &amp; Warschauer (2016) — VSTF and comprehension</li>
+                  <li>Legge et al. (1997) — Characters per fixation in reading</li>
+                  <li>Hirotani, Frazier &amp; Rayner (2006) — Prosody and processing</li>
+                </ul>
+              </div>
+              <p className="text-sm text-muted-foreground/70 border-t border-border/40 pt-4">
+                PhraseFlow is a reading aid, not a medical device. No clinical claims are made.
+                If you find it helps, great. If not, your original EPUB is always unchanged.
+              </p>
+            </div>
+          </div>
+        </section>
 
         {/* 6. Why it exists */}
         <section
