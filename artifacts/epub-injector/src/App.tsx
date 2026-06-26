@@ -2,16 +2,35 @@ import { useState, useEffect, useCallback, useRef, ChangeEvent } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { InfoIcon, AlertCircle, FileText, UploadCloud, CheckCircle2, Download, ChevronDown } from "lucide-react";
+import {
+  InfoIcon,
+  AlertCircle,
+  FileText,
+  UploadCloud,
+  CheckCircle2,
+  Download,
+  ChevronDown,
+} from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import NotFound from "@/pages/not-found";
 
@@ -35,7 +54,6 @@ function modeLabel(mode: Mode): string {
 function isFallbackMode(modeUsed: string): boolean {
   return modeUsed === "keyword_fallback";
 }
-
 
 // Wobbly hand-drawn highlighter behind "Read in phrases"
 function Highlighter({ children }: { children: React.ReactNode }) {
@@ -64,7 +82,9 @@ function Highlighter({ children }: { children: React.ReactNode }) {
           strokeWidth="0.5"
         />
       </svg>
-      <span className="relative" style={{ zIndex: 1 }}>{children}</span>
+      <span className="relative" style={{ zIndex: 1 }}>
+        {children}
+      </span>
     </span>
   );
 }
@@ -87,13 +107,16 @@ function Home() {
   const [peeking, setPeeking] = useState(false);
 
   const [file, setFile] = useState<File | null>(null);
-  const [status, setStatus] = useState<"idle" | "processing" | "success" | "error">("idle");
+  const [status, setStatus] = useState<
+    "idle" | "processing" | "success" | "error"
+  >("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [fallbackMsg, setFallbackMsg] = useState("");
   const [downloadUrl, setDownloadUrl] = useState("");
   const [downloadFilename, setDownloadFilename] = useState("");
 
-  const heroSentence = "She wrote every morning by the window, while the city came slowly awake outside and the light changed.";
+  const heroSentence =
+    "She wrote every morning by the window, while the city came slowly awake outside and the light changed.";
   const [heroAfterText, setHeroAfterText] = useState(heroSentence);
 
   // Fetch correctly-spaced hero After text on mount
@@ -109,8 +132,10 @@ function Home() {
         chunk_density: "medium",
       }),
     })
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => { if (data?.result) setHeroAfterText(data.result); })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.result) setHeroAfterText(data.result);
+      })
       .catch(() => {});
   }, []);
 
@@ -120,7 +145,7 @@ function Home() {
     if (!el) return;
     const observer = new IntersectionObserver(
       ([entry]) => setHeroVisible(entry.isIntersecting),
-      { threshold: 0.15 }
+      { threshold: 0.15 },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -131,8 +156,18 @@ function Home() {
     const handler = setTimeout(async () => {
       setPreviewLoading(true);
       try {
-        const spacingStr = state.spacingWidth === 0 ? "subtle" : state.spacingWidth === 1 ? "medium" : "strong";
-        const densityStr = state.chunkDensity === 0 ? "subtle" : state.chunkDensity === 1 ? "medium" : "obvious";
+        const spacingStr =
+          state.spacingWidth === 0
+            ? "subtle"
+            : state.spacingWidth === 1
+              ? "medium"
+              : "strong";
+        const densityStr =
+          state.chunkDensity === 0
+            ? "subtle"
+            : state.chunkDensity === 1
+              ? "medium"
+              : "obvious";
         const res = await fetch("/api/preview", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -193,11 +228,28 @@ function Home() {
     formData.append("file", file);
     formData.append("mode", state.mode);
     formData.append("language", state.language);
-    formData.append("spacing_width", state.spacingWidth === 0 ? "subtle" : state.spacingWidth === 1 ? "medium" : "strong");
-    formData.append("chunk_density", state.chunkDensity === 0 ? "subtle" : state.chunkDensity === 1 ? "medium" : "obvious");
+    formData.append(
+      "spacing_width",
+      state.spacingWidth === 0
+        ? "subtle"
+        : state.spacingWidth === 1
+          ? "medium"
+          : "strong",
+    );
+    formData.append(
+      "chunk_density",
+      state.chunkDensity === 0
+        ? "subtle"
+        : state.chunkDensity === 1
+          ? "medium"
+          : "obvious",
+    );
 
     try {
-      const res = await fetch("/api/process", { method: "POST", body: formData });
+      const res = await fetch("/api/process", {
+        method: "POST",
+        body: formData,
+      });
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
         throw new Error((json as any).error || "Processing failed");
@@ -218,16 +270,23 @@ function Home() {
       setStatus("success");
     } catch (err: unknown) {
       setStatus("error");
-      setErrorMsg(err instanceof Error ? err.message : "An unexpected error occurred");
+      setErrorMsg(
+        err instanceof Error ? err.message : "An unexpected error occurred",
+      );
     }
   };
 
   const getSpacingLabel = (val: number) => ["Subtle", "Medium", "Strong"][val];
   const getDensityLabel = (val: number) => ["Subtle", "Medium", "Obvious"][val];
-  const showFallback = previewModeUsed ? isFallbackMode(previewModeUsed) : false;
+  const showFallback = previewModeUsed
+    ? isFallbackMode(previewModeUsed)
+    : false;
 
   return (
-    <div className="min-h-screen pb-20 selection:bg-primary/20" data-testid="page-home">
+    <div
+      className="min-h-screen pb-20 selection:bg-primary/20"
+      data-testid="page-home"
+    >
       {/* keyframes */}
       <style>{`
         @keyframes gentleBounce {
@@ -252,7 +311,6 @@ function Home() {
         data-testid="section-hero"
       >
         <div className="max-w-7xl w-full mx-auto space-y-10">
-
           {/* Headline with "Read in phrases" highlighter */}
           <h1
             className="font-serif text-6xl md:text-7xl lg:text-8xl font-medium tracking-tight text-foreground leading-tight"
@@ -267,21 +325,31 @@ function Home() {
           <p
             className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
             data-testid="hero-subhead"
-          >PhraseFlow adds subtle spacing at the natural phrase boundaries in your EPUBs, so your eyes group words the way fluent readers already do, and it hands you a file ready for your preferred e-reader.</p>
+          >
+            PhraseFlow adds subtle spacing at the natural phrase boundaries in
+            your EPUBs, so your eyes group words the way fluent readers already
+            do, and it hands you a file ready for your preferred e-reader.
+          </p>
 
           {/* Before / After cards */}
-          <div className="grid md:grid-cols-2 gap-4 text-left max-w-4xl mx-auto" data-testid="hero-comparison">
+          <div
+            className="grid md:grid-cols-2 gap-4 text-left max-w-4xl mx-auto"
+            data-testid="hero-comparison"
+          >
             <div className="p-8 rounded-xl bg-muted/30 border border-border/50">
               <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-5">
                 Before
               </div>
               <p className="font-serif text-xl leading-[2] text-foreground">
-                She wrote every morning by the window, while the city came slowly awake outside and the light changed.
+                She wrote every morning by the window, while the city came
+                slowly awake outside and the light changed.
               </p>
             </div>
             <div className="p-8 rounded-xl bg-primary/5 border border-primary/20 shadow-sm relative overflow-hidden">
               <div className="absolute top-0 left-0 w-1 h-full bg-primary/40" />
-              <div className="text-xs uppercase tracking-wider text-primary font-semibold mb-5">After</div>
+              <div className="text-xs uppercase tracking-wider text-primary font-semibold mb-5">
+                After
+              </div>
               <p className="font-serif text-xl leading-[2] text-foreground">
                 {heroAfterText}
               </p>
@@ -303,8 +371,10 @@ function Home() {
         </div>
       </section>
       {/* ── Sections below the fold ─────────────────────────────────────── */}
-      <main className="max-w-7xl mx-auto px-6 md:px-10 space-y-24 pt-20" data-testid="main-content">
-
+      <main
+        className="max-w-7xl mx-auto px-6 md:px-10 space-y-24 pt-20"
+        data-testid="main-content"
+      >
         {/* 2. Live Preview */}
         <section data-testid="section-preview">
           <Card
@@ -312,15 +382,22 @@ function Home() {
             data-testid="card-preview"
           >
             <div className="bg-muted/30 px-6 py-4 border-b border-border/50 flex justify-between items-center">
-              <h2 className="font-medium text-foreground">Try it ➞ Preview before you process</h2>
+              <h2 className="font-medium text-foreground">
+                Try it ➞ Preview before you process
+              </h2>
               {previewLoading && (
-                <Spinner className="h-4 w-4 text-primary" data-testid="preview-spinner" />
+                <Spinner
+                  className="h-4 w-4 text-primary"
+                  data-testid="preview-spinner"
+                />
               )}
             </div>
             <CardContent className="p-6 space-y-8">
-
               <div className="space-y-3">
-                <Label htmlFor="preview-text" className="text-sm font-medium text-foreground">
+                <Label
+                  htmlFor="preview-text"
+                  className="text-sm font-medium text-foreground"
+                >
                   Test Text
                 </Label>
                 <Textarea
@@ -333,55 +410,77 @@ function Home() {
               </div>
 
               <div className="grid md:grid-cols-2 gap-8 bg-background p-5 rounded-lg border border-border/40">
-
                 {/* Left col: Mode + Language */}
                 <div className="space-y-6">
                   <div className="space-y-3">
                     <Label className="text-sm font-medium">Mode</Label>
                     <RadioGroup
                       value={state.mode}
-                      onValueChange={(v: Mode) => setState({ ...state, mode: v })}
+                      onValueChange={(v: Mode) =>
+                        setState({ ...state, mode: v })
+                      }
                       className="flex flex-col gap-2"
                       data-testid="radio-mode"
                     >
                       <div className="flex items-center justify-between bg-muted/20 px-3 py-2.5 rounded-md border border-border/50">
                         <div className="flex items-center gap-2">
-                          <RadioGroupItem value="pseudosyntactic" id="mode-pseudo" />
-                          <Label htmlFor="mode-pseudo" className="cursor-pointer font-normal">
+                          <RadioGroupItem
+                            value="pseudosyntactic"
+                            id="mode-pseudo"
+                          />
+                          <Label
+                            htmlFor="mode-pseudo"
+                            className="cursor-pointer font-normal"
+                          >
                             Pseudosyntactic
                           </Label>
                         </div>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <button className="text-muted-foreground hover:text-foreground ml-1" data-testid="tooltip-mode-pseudo">
+                            <button
+                              className="text-muted-foreground hover:text-foreground ml-1"
+                              data-testid="tooltip-mode-pseudo"
+                            >
                               <InfoIcon className="h-3.5 w-3.5" />
                             </button>
                           </TooltipTrigger>
                           <TooltipContent className="max-w-[260px] p-3 text-sm">
-                            A fast, statistical guess at where phrases begin, from word patterns
-                            rather than full grammar. Like the quick first-pass estimate your brain
-                            makes before it fully parses a sentence. Subtle, frequent cues.
+                            A fast, statistical guess at where phrases begin,
+                            from word patterns rather than full grammar. Like
+                            the quick first-pass estimate your brain makes
+                            before it fully parses a sentence. Subtle, frequent
+                            cues.
                           </TooltipContent>
                         </Tooltip>
                       </div>
 
                       <div className="flex items-center justify-between bg-muted/20 px-3 py-2.5 rounded-md border border-border/50">
                         <div className="flex items-center gap-2">
-                          <RadioGroupItem value="syntactic" id="mode-syntactic" />
-                          <Label htmlFor="mode-syntactic" className="cursor-pointer font-normal">
+                          <RadioGroupItem
+                            value="syntactic"
+                            id="mode-syntactic"
+                          />
+                          <Label
+                            htmlFor="mode-syntactic"
+                            className="cursor-pointer font-normal"
+                          >
                             Syntactic
                           </Label>
                         </div>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <button className="text-muted-foreground hover:text-foreground ml-1" data-testid="tooltip-mode-syntactic">
+                            <button
+                              className="text-muted-foreground hover:text-foreground ml-1"
+                              data-testid="tooltip-mode-syntactic"
+                            >
                               <InfoIcon className="h-3.5 w-3.5" />
                             </button>
                           </TooltipTrigger>
                           <TooltipContent className="max-w-[260px] p-3 text-sm">
-                            A full grammatical analysis of each sentence. Breaks land only at real
-                            clause and phrase boundaries, and tightly bound word groups are never
-                            split. More precise, sometimes sparser.
+                            A full grammatical analysis of each sentence. Breaks
+                            land only at real clause and phrase boundaries, and
+                            tightly bound word groups are never split. More
+                            precise, sometimes sparser.
                           </TooltipContent>
                         </Tooltip>
                       </div>
@@ -412,48 +511,84 @@ function Home() {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium">Spacing Width</Label>
+                        <Label className="text-sm font-medium">
+                          Spacing Width
+                        </Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <button className="text-muted-foreground hover:text-foreground" data-testid="tooltip-spacing">
+                            <button
+                              className="text-muted-foreground hover:text-foreground"
+                              data-testid="tooltip-spacing"
+                            >
                               <InfoIcon className="h-4 w-4" />
                             </button>
                           </TooltipTrigger>
                           <TooltipContent className="max-w-[240px] p-3 text-sm">
-                            How wide each inserted gap is, from a thin sliver to a full em space.
-                            Changes the size of each break, not how many there are.
+                            How wide each inserted gap is, from a thin sliver to
+                            a full em space. Changes the size of each break, not
+                            how many there are.
                           </TooltipContent>
                         </Tooltip>
                       </div>
-                      <span className="text-xs text-muted-foreground">{getSpacingLabel(state.spacingWidth)}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {getSpacingLabel(state.spacingWidth)}
+                      </span>
                     </div>
-                    <Slider value={[state.spacingWidth]} max={2} step={1} onValueChange={(v) => setState({ ...state, spacingWidth: v[0] })} data-testid="slider-spacing" />
+                    <Slider
+                      value={[state.spacingWidth]}
+                      max={2}
+                      step={1}
+                      onValueChange={(v) =>
+                        setState({ ...state, spacingWidth: v[0] })
+                      }
+                      data-testid="slider-spacing"
+                    />
                     <div className="flex justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
-                      <span>Subtle</span><span>Medium</span><span>Strong</span>
+                      <span>Subtle</span>
+                      <span>Medium</span>
+                      <span>Strong</span>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium">Chunk Density</Label>
+                        <Label className="text-sm font-medium">
+                          Chunk Density
+                        </Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <button className="text-muted-foreground hover:text-foreground" data-testid="tooltip-density">
+                            <button
+                              className="text-muted-foreground hover:text-foreground"
+                              data-testid="tooltip-density"
+                            >
                               <InfoIcon className="h-4 w-4" />
                             </button>
                           </TooltipTrigger>
                           <TooltipContent className="max-w-[240px] p-3 text-sm">
-                            How often breaks appear. Subtle keeps phrases long and breaks rare;
-                            Obvious breaks more often into smaller chunks.
+                            How often breaks appear. Subtle keeps phrases long
+                            and breaks rare; Obvious breaks more often into
+                            smaller chunks.
                           </TooltipContent>
                         </Tooltip>
                       </div>
-                      <span className="text-xs text-muted-foreground">{getDensityLabel(state.chunkDensity)}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {getDensityLabel(state.chunkDensity)}
+                      </span>
                     </div>
-                    <Slider value={[state.chunkDensity]} max={2} step={1} onValueChange={(v) => setState({ ...state, chunkDensity: v[0] })} data-testid="slider-density" />
+                    <Slider
+                      value={[state.chunkDensity]}
+                      max={2}
+                      step={1}
+                      onValueChange={(v) =>
+                        setState({ ...state, chunkDensity: v[0] })
+                      }
+                      data-testid="slider-density"
+                    />
                     <div className="flex justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
-                      <span>Subtle</span><span>Medium</span><span>Obvious</span>
+                      <span>Subtle</span>
+                      <span>Medium</span>
+                      <span>Obvious</span>
                     </div>
                   </div>
                 </div>
@@ -462,22 +597,34 @@ function Home() {
               {/* Result */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between flex-wrap gap-2">
-                  <Label className="text-sm font-medium text-foreground">Result</Label>
+                  <Label className="text-sm font-medium text-foreground">
+                    Result
+                  </Label>
                   <div className="flex items-center gap-2 flex-wrap">
                     {previewModeUsed && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20" data-testid="badge-mode-used">
+                      <span
+                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20"
+                        data-testid="badge-mode-used"
+                      >
                         {friendlyMode(previewModeUsed)}
                       </span>
                     )}
                     {showFallback && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/20" data-testid="badge-mode-fallback">
+                      <span
+                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/20"
+                        data-testid="badge-mode-fallback"
+                      >
                         Keyword mode (grammar parser unavailable)
                       </span>
                     )}
                     <button
                       className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium border border-border/60 bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted/70 select-none transition-colors active:bg-muted"
-                      onMouseDown={startPeeking} onMouseUp={stopPeeking} onMouseLeave={stopPeeking}
-                      onTouchStart={startPeeking} onTouchEnd={stopPeeking} onTouchCancel={stopPeeking}
+                      onMouseDown={startPeeking}
+                      onMouseUp={stopPeeking}
+                      onMouseLeave={stopPeeking}
+                      onTouchStart={startPeeking}
+                      onTouchEnd={stopPeeking}
+                      onTouchCancel={stopPeeking}
                       data-testid="button-peek"
                     >
                       Without PhraseFlow
@@ -492,11 +639,12 @@ function Home() {
                   {peeking
                     ? previewText
                     : previewResult || (
-                        <span className="text-muted-foreground italic">Preview will appear here…</span>
+                        <span className="text-muted-foreground italic">
+                          Preview will appear here…
+                        </span>
                       )}
                 </div>
               </div>
-
             </CardContent>
           </Card>
         </section>
@@ -504,29 +652,44 @@ function Home() {
         {/* 3. Upload & Process */}
         <section data-testid="section-process">
           <div className="space-y-6">
-            <h2 className="font-serif text-3xl font-medium text-foreground" data-testid="heading-process">
+            <h2
+              className="font-serif text-3xl font-medium text-foreground"
+              data-testid="heading-process"
+            >
               Process your EPUB
             </h2>
 
             <div className="flex flex-col items-center gap-4">
-
               {/* Dropzone */}
               <div
                 className={`w-full border-2 border-dashed flex flex-col items-center justify-center py-16 px-8 text-center cursor-pointer transition-colors rounded-xl ${
-                  file ? "border-primary bg-primary/5" : "border-border/60 hover:border-primary/40 hover:bg-muted/30 bg-background"
+                  file
+                    ? "border-primary bg-primary/5"
+                    : "border-border/60 hover:border-primary/40 hover:bg-muted/30 bg-background"
                 }`}
                 onClick={() => document.getElementById("epub-upload")?.click()}
                 data-testid="upload-area"
               >
-                <input id="epub-upload" type="file" accept=".epub" className="hidden" onChange={handleFileChange} data-testid="input-file" />
+                <input
+                  id="epub-upload"
+                  type="file"
+                  accept=".epub"
+                  className="hidden"
+                  onChange={handleFileChange}
+                  data-testid="input-file"
+                />
                 {file ? (
                   <div className="flex flex-col items-center space-y-3">
                     <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                       <FileText className="h-7 w-7" />
                     </div>
                     <div>
-                      <p className="font-medium text-foreground text-lg">{file.name}</p>
-                      <p className="text-sm text-muted-foreground mt-0.5">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                      <p className="font-medium text-foreground text-lg">
+                        {file.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
                     </div>
                   </div>
                 ) : (
@@ -535,8 +698,12 @@ function Home() {
                       <UploadCloud className="h-7 w-7" />
                     </div>
                     <div className="space-y-1">
-                      <p className="font-medium text-foreground text-lg">Click to browse or drag .epub here</p>
-                      <p className="text-sm text-muted-foreground">DRM-free EPUBs only</p>
+                      <p className="font-medium text-foreground text-lg">
+                        Click to browse or drag .epub here
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        DRM-free EPUBs only
+                      </p>
                     </div>
                   </div>
                 )}
@@ -550,10 +717,22 @@ function Home() {
                 <InfoIcon className="h-4 w-4 shrink-0" />
                 <span>
                   Using:{" "}
-                  <strong className="text-foreground">{modeLabel(state.mode)}</strong> mode,{" "}
-                  <strong className="text-foreground">{getSpacingLabel(state.spacingWidth).toLowerCase()}</strong> spacing,{" "}
-                  <strong className="text-foreground">{getDensityLabel(state.chunkDensity).toLowerCase()}</strong> density (
-                  {state.language === "auto" ? "auto-detect language" : state.language}).
+                  <strong className="text-foreground">
+                    {modeLabel(state.mode)}
+                  </strong>{" "}
+                  mode,{" "}
+                  <strong className="text-foreground">
+                    {getSpacingLabel(state.spacingWidth).toLowerCase()}
+                  </strong>{" "}
+                  spacing,{" "}
+                  <strong className="text-foreground">
+                    {getDensityLabel(state.chunkDensity).toLowerCase()}
+                  </strong>{" "}
+                  density (
+                  {state.language === "auto"
+                    ? "auto-detect language"
+                    : state.language}
+                  ).
                 </span>
               </div>
 
@@ -570,7 +749,10 @@ function Home() {
 
               {/* Status caption — appears below button during / after processing */}
               {status !== "idle" && (
-                <div className="flex items-center gap-2 text-sm animate-in fade-in duration-300" data-testid="process-caption">
+                <div
+                  className="flex items-center gap-2 text-sm animate-in fade-in duration-300"
+                  data-testid="process-caption"
+                >
                   {status === "processing" && (
                     <>
                       <span
@@ -578,13 +760,17 @@ function Home() {
                         style={{ animation: "spin 1.1s linear infinite" }}
                         aria-hidden="true"
                       />
-                      <span className="text-muted-foreground">Processing — please wait…</span>
+                      <span className="text-muted-foreground">
+                        Processing — please wait…
+                      </span>
                     </>
                   )}
                   {status === "success" && (
                     <>
                       <CheckCircle2 className="h-4 w-4 text-emerald-600/80" />
-                      <span className="text-emerald-700/90">Done! Your file is ready.</span>
+                      <span className="text-emerald-700/90">
+                        Done! Your file is ready.
+                      </span>
                     </>
                   )}
                   {status === "error" && (
@@ -595,12 +781,14 @@ function Home() {
                   )}
                 </div>
               )}
-
             </div>
 
             {/* Post-process area */}
             {(fallbackMsg || status === "success") && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300 pt-2" data-testid="status-area">
+              <div
+                className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300 pt-2"
+                data-testid="status-area"
+              >
                 {fallbackMsg && status === "success" && (
                   <Alert className="rounded-lg bg-amber-50 text-amber-900 border-amber-200">
                     <InfoIcon className="h-4 w-4" />
@@ -617,7 +805,12 @@ function Home() {
                       <CheckCircle2 className="h-6 w-6" />
                       <span className="text-lg">Ready for Kindle</span>
                     </div>
-                    <Button asChild className="rounded-lg shadow-sm" size="lg" data-testid="link-download">
+                    <Button
+                      asChild
+                      className="rounded-lg shadow-sm"
+                      size="lg"
+                      data-testid="link-download"
+                    >
                       <a href={downloadUrl} download={downloadFilename}>
                         <Download className="mr-2 h-4 w-4" /> Download Book
                       </a>
@@ -630,99 +823,178 @@ function Home() {
         </section>
 
         {/* 4. How to use */}
-        <section className="pt-8 border-t border-border/50 space-y-6" data-testid="section-how-to">
+        <section
+          className="pt-8 border-t border-border/50 space-y-6"
+          data-testid="section-how-to"
+        >
           <h3 className="font-serif text-2xl text-foreground">How to use</h3>
           <div className="grid sm:grid-cols-3 gap-6">
             <div className="bg-muted/30 border border-border/40 rounded-xl p-6 space-y-3">
               <div className="flex items-center gap-3">
-                <span className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm">1</span>
-                <strong className="text-foreground font-medium">Upload a DRM-free EPUB</strong>
+                <span className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm">
+                  1
+                </span>
+                <strong className="text-foreground font-medium">
+                  Upload a DRM-free EPUB
+                </strong>
               </div>
-              <p className="text-muted-foreground leading-relaxed text-sm">If your book has DRM, you'll need to remove it first. PhraseFlow only works with DRM-free files and is currently compatible only with EPUBs.</p>
+              <p className="text-muted-foreground leading-relaxed text-sm">
+                If your book has DRM, you'll need to remove it first. PhraseFlow
+                only works with DRM-free files and is currently compatible only
+                with EPUBs.
+              </p>
             </div>
             <div className="bg-muted/30 border border-border/40 rounded-xl p-6 space-y-3">
               <div className="flex items-center gap-3">
-                <span className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm">2</span>
-                <strong className="text-foreground font-medium">Pick a mode and adjust the sliders</strong>
+                <span className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm">
+                  2
+                </span>
+                <strong className="text-foreground font-medium">
+                  Pick a mode and adjust the sliders
+                </strong>
               </div>
-              <p className="text-muted-foreground leading-relaxed text-sm">Use the live preview to find the rhythm that suits you. Syntactic mode uses full grammar analysis; Pseudosyntactic uses fast pattern detection.</p>
+              <p className="text-muted-foreground leading-relaxed text-sm">
+                Use the live preview to find the rhythm that suits you.
+                Syntactic mode uses full grammar analysis; Pseudosyntactic uses
+                fast pattern detection.
+              </p>
             </div>
             <div className="bg-muted/30 border border-border/40 rounded-xl p-6 space-y-3">
               <div className="flex items-center gap-3">
-                <span className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm">3</span>
-                <strong className="text-foreground font-medium">Download and send to your e-reader</strong>
+                <span className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm">
+                  3
+                </span>
+                <strong className="text-foreground font-medium">
+                  Download and send to your e-reader
+                </strong>
               </div>
-              <p className="text-muted-foreground leading-relaxed text-sm">Transfer via USB cable or use Send to Kindle. Your original file is untouched; you can always reprocess with different settings.</p>
+              <p className="text-muted-foreground leading-relaxed text-sm">
+                Transfer via USB cable or use Send to Kindle. Your original file
+                is untouched; you can always reprocess with different settings.
+              </p>
             </div>
           </div>
         </section>
 
         {/* 5. How it works and the science */}
-        <section className="pt-8 border-t border-border/50 space-y-8" data-testid="section-science">
-          <h3 className="font-serif text-2xl text-foreground">How it works, and the science behind it</h3>
+        <section
+          className="pt-8 border-t border-border/50 space-y-8"
+          data-testid="section-science"
+        >
+          <h3 className="font-serif text-2xl text-foreground">
+            How it works, and the science behind it
+          </h3>
 
           <div className="grid md:grid-cols-2 gap-x-12 gap-y-5 text-muted-foreground leading-relaxed">
             <div className="space-y-1">
               <p className="font-medium text-foreground">Chunking</p>
-              <p>Fluent readers don't move word by word; they group words into meaningful phrases and take in each at a glance. PhraseFlow makes those natural groupings visible in your text, so the eye has less work to do.</p>
+              <p>
+                Fluent readers don't move word by word; they group words into
+                meaningful phrases and take in each at a glance. PhraseFlow
+                makes those natural groupings visible in your text, so the eye
+                has less work to do.
+              </p>
             </div>
             <div className="space-y-1">
-              <p className="font-medium text-foreground">Syntactically cued formatting</p>
-              <p>Making phrase boundaries visible with spacing. North & Jenkins first measured the effect in 1951: readers were faster and comprehended more when phrase structure was cued. Many studies have since confirmed it.</p>
+              <p className="font-medium text-foreground">
+                Syntactically cued formatting
+              </p>
+              <p>
+                Making phrase boundaries visible with spacing. North & Jenkins
+                first measured the effect in 1951: readers were faster and
+                comprehended more when phrase structure was cued. Many studies
+                have since confirmed it.
+              </p>
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">Pseudosyntax</p>
-              <p>Before you consciously parse a sentence, your brain makes a fast, rough guess at its structure from statistical cues, then refines it. Subtle spacing supports that first-pass guess instead of fighting it.</p>
+              <p>
+                Before you consciously parse a sentence, your brain makes a
+                fast, rough guess at its structure from statistical cues, then
+                refines it. Subtle spacing supports that first-pass guess
+                instead of fighting it.
+              </p>
             </div>
             <div className="space-y-1">
-              <p className="font-medium text-foreground">Cognitive load and cognitive fluency</p>
-              <p>Pre-grouping words lowers the working-memory cost of reading (load) and raises the felt ease of processing (fluency), which tracks with comprehension and stamina, especially under fatigue.</p>
+              <p className="font-medium text-foreground">
+                Cognitive load and cognitive fluency
+              </p>
+              <p>
+                Pre-grouping words lowers the working-memory cost of reading
+                (load) and raises the felt ease of processing (fluency), which
+                tracks with comprehension and stamina, especially under fatigue.
+              </p>
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">Eye-fixation span</p>
-              <p>The eye resolves only about 9 to 15 characters per fixation (Legge et al., 1997). Chunks of that size are read with fewer, shorter fixations and less backtracking (Magloire, 2002).</p>
+              <p>
+                The eye resolves only about 9 to 15 characters per fixation
+                (Legge et al., 1997). Chunks of that size are read with fewer,
+                shorter fixations and less backtracking (Magloire, 2002).
+              </p>
             </div>
             <div className="space-y-1">
-              <p className="font-medium text-foreground">Regression &amp; backtracking</p>
-              <p>When a phrase boundary is missed, the eye doubles back to re-read. Poor readers regress far more often than skilled ones, with up to 43% fewer regressions when text is phrase-cued (Magloire, 2002).</p>
+              <p className="font-medium text-foreground">
+                Regression &amp; backtracking
+              </p>
+              <p>
+                When a phrase boundary is missed, the eye doubles back to
+                re-read. Poor readers regress far more often than skilled ones,
+                with up to 43% fewer regressions when text is phrase-cued
+                (Magloire, 2002).
+              </p>
             </div>
           </div>
 
           <div className="space-y-4">
-            <h4 className="font-serif text-lg text-foreground">Two ways to read</h4>
+            <h4 className="font-serif text-lg text-foreground">
+              Two ways to read
+            </h4>
             <div className="grid md:grid-cols-2 gap-6">
               <div className="bg-muted/30 border border-border/40 rounded-xl p-5 space-y-2">
                 <p className="font-medium text-foreground">Pseudosyntactic</p>
-                <p className="text-muted-foreground text-sm leading-relaxed">Mirrors the brain's fast first guess at sentence structure, reading word patterns to place gentle, frequent cues. Uses statistical heuristics, not grammar rules.</p>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Mirrors the brain's fast first guess at sentence structure,
+                  reading word patterns to place gentle, frequent cues. Uses
+                  statistical heuristics, not grammar rules.
+                </p>
               </div>
               <div className="bg-muted/30 border border-border/40 rounded-xl p-5 space-y-2">
                 <p className="font-medium text-foreground">Syntactic</p>
-                <p className="text-muted-foreground text-sm leading-relaxed">Performs a full grammatical parse, breaking only at genuine clause and phrase boundaries and never inside tightly bound groups. More precise.</p>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Performs a full grammatical parse, breaking only at genuine
+                  clause and phrase boundaries and never inside tightly bound
+                  groups. More precise.
+                </p>
               </div>
             </div>
             <p className="text-muted-foreground text-sm leading-relaxed text-center">
-              <strong className="text-foreground">Why both?</strong> They trade coverage against precision differently. But we expect to settle on one single coherent mode soon.
+              <strong className="text-foreground">Why both?</strong> They trade
+              coverage against precision differently. But we expect to settle on
+              one single coherent mode soon.
             </p>
           </div>
-
         </section>
 
         {/* FAQ */}
-        <section className="pt-8 border-t border-border/50 space-y-8" data-testid="section-faq">
-          <h3 className="font-serif text-2xl text-foreground">Frequently asked questions</h3>
+        <section
+          className="pt-8 border-t border-border/50 space-y-8"
+          data-testid="section-faq"
+        >
+          <h3 className="font-serif text-2xl text-foreground">Frequently Asked Questions</h3>
           <dl className="space-y-0 divide-y divide-border/40">
             {[
               {
                 q: "Will PhraseFlow work with my e-reader?",
-                a: "PhraseFlow outputs a standard EPUB file. Any e-reader that accepts EPUBs will work — Kindle, Kobo, Apple Books, and most reading apps. The spacing is inline, so it survives font-size changes and reflow without breaking.",
+                a: "PhraseFlow outputs a standard EPUB file. Any e-reader that accepts EPUBs will work, including Kindle, Kobo, Apple Books, and most reading apps. The spacing is inline, so it survives font-size changes and reflow without breaking.",
               },
               {
                 q: "Does PhraseFlow remove DRM?",
-                a: "No — and it can't. PhraseFlow refuses to process any EPUB with DRM and will tell you so clearly. It only works on DRM-free files: books you authored, public-domain texts, or files you've already legally stripped through your own means.",
+                a: "No, and it can't. PhraseFlow refuses to process any EPUB with DRM and will tell you so clearly. It only works on DRM-free files: books you authored, public-domain texts, or files you've already legally stripped through your own means.",
               },
               {
                 q: "How do I choose between Syntactic and Pseudosyntactic mode?",
-                a: "Syntactic uses a full grammar parse and places breaks only at genuine clause and phrase boundaries — precise, sometimes sparse. Pseudosyntactic uses a fast statistical guess from word patterns — more frequent, gentler cues. Try both on the same passage in the live preview and go with what feels more natural to read. We expect to settle on a single recommended mode once real-world reading tests are in.",
+                a: "Syntactic uses a full grammar parse, and places breaks only at genuine clause and phrase boundaries. Pseudosyntactic uses a fast statistical guess based on word patterns, leading to more frequent cues. Try both in the live preview and go with what feels more natural. We expect to settle on a single recommended mode once real-world reading tests are in.",
               },
               {
                 q: "Can I adjust the spacing?",
@@ -730,37 +1002,53 @@ function Home() {
               },
               {
                 q: "What if I don't like the result?",
-                a: "Your original file is never modified. PhraseFlow processes a copy and hands you the new file — so you can always go back to the original, tweak the settings, and reprocess as many times as you like.",
+                a: "Your original file is never modified. PhraseFlow processes a copy and provides you with the new file for download, so you can always go back to the original, tweak the settings, and reprocess as many times as you like.",
               },
               {
                 q: "Does PhraseFlow store my books or personal data?",
-                a: "No. Uploaded files are processed in a temporary directory and deleted immediately after your download is ready. PhraseFlow does not log IP addresses, store books, or collect any personal data. Nothing you upload is ever retained or transmitted anywhere.",
+                a: "No. Uploaded files are processed in a temporary directory and deleted immediately after your download is ready. PhraseFlow does not log IP addresses, store EPUBs, or collect any personal data. Nothing you upload is ever retained or transmitted anywhere.",
               },
             ].map(({ q, a }) => (
               <div key={q} className="py-5">
-                <dt className="font-serif text-base font-medium text-foreground mb-2">{q}</dt>
-                <dd className="text-muted-foreground leading-relaxed text-sm">{a}</dd>
+                <dt className="font-serif text-base font-medium text-foreground mb-2">
+                  {q}
+                </dt>
+                <dd className="text-muted-foreground leading-relaxed text-sm">
+                  {a}
+                </dd>
               </div>
             ))}
           </dl>
         </section>
 
         {/* References */}
-        <section className="pt-8 border-t border-border/50 space-y-6" data-testid="section-references">
+        <section
+          className="pt-8 border-t border-border/50 space-y-6"
+          data-testid="section-references"
+        >
           <h3 className="font-serif text-2xl text-foreground">References</h3>
           <ul className="flex flex-col gap-y-2 text-sm text-muted-foreground list-disc pl-5">
-            <li>North &amp; Jenkins (1951): ~10.9% faster reading; the foundational syntactically-cued study</li>
+            <li>
+              North &amp; Jenkins (1951): ~10.9% faster reading; the
+              foundational syntactically-cued study
+            </li>
             <li>Graf &amp; Torrey (1966): ~30.9% comprehension gain</li>
             <li>Mason &amp; Kendall (1979): ~26.3% comprehension gain</li>
             <li>Jandreau, Muncer &amp; Bever (1986): ~17.9% faster reading</li>
             <li>Negin (1987): ~14.9% comprehension gain</li>
             <li>Magloire (2002): ~31% faster reading; eye-movement evidence</li>
-            <li>Walker et al. (2005), Visual-Syntactic Text Formatting: up to ~40% comprehension gain</li>
+            <li>
+              Walker et al. (2005), Visual-Syntactic Text Formatting: up to ~40%
+              comprehension gain
+            </li>
             <li>Legge et al. (1997): eye-fixation span</li>
             <li>Hirotani, Frazier &amp; Rayner (2006): prosodic boundaries</li>
           </ul>
           <p className="text-xs text-muted-foreground/70 leading-relaxed pt-2 border-t border-border/30">
-            These effect sizes span decades and methods, and several come from small studies. The direction is consistent: cueing phrases helps, but treat the magnitudes as a range, and expect individual variation.
+            These effect sizes span decades and methods, and several come from
+            small studies. The direction is consistent: cueing phrases helps,
+            but treat the magnitudes as a range, and expect individual
+            variation.
           </p>
         </section>
 
@@ -771,24 +1059,32 @@ function Home() {
         >
           <h3 className="font-serif text-2xl text-foreground">Why it exists</h3>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Fluent readers don't read one word at a time; they take in meaningful phrases per glance.
-            PhraseFlow swiftly rebuilds your EPUBs to gently cue those phrase groups with carefully
-            calibrated extra spacing: a free, open-source tool that works on any e-reader that
-            accepts EPUBs.
+            Fluent readers don't read one word at a time; they take in
+            meaningful phrases per glance. PhraseFlow swiftly rebuilds your
+            EPUBs to gently cue those phrase groups with carefully calibrated
+            extra spacing: a free, open-source tool that works on any e-reader
+            that accepts EPUBs.
           </p>
         </section>
-
       </main>
       {/* Footer */}
-      <footer className="max-w-7xl mx-auto px-6 md:px-10 mt-24 pb-8 text-center space-y-2 border-t border-border/30 pt-8" data-testid="footer">
+      <footer
+        className="max-w-7xl mx-auto px-6 md:px-10 mt-24 pb-8 text-center space-y-2 border-t border-border/30 pt-8"
+        data-testid="footer"
+      >
         <p className="text-sm text-foreground">
           Free and open on{" "}
-          <a href="https://github.com" className="underline underline-offset-4 decoration-border hover:text-primary hover:decoration-primary transition-colors">
+          <a
+            href="https://github.com"
+            className="underline underline-offset-4 decoration-border hover:text-primary hover:decoration-primary transition-colors"
+          >
             GitHub
           </a>
           . Contributions and evidence welcome.
         </p>
-        <p className="text-xs text-muted-foreground/70">PhraseFlow — a reading aid, not a medical device.</p>
+        <p className="text-xs text-muted-foreground/70">
+          PhraseFlow — a reading aid, not a medical device.
+        </p>
       </footer>
     </div>
   );
