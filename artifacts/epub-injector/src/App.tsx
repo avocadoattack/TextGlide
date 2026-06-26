@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Select,
@@ -40,15 +39,16 @@ const defaultPreviewText =
   "The ability to read fluently depends not just on recognizing individual words, but on grouping them into meaningful phrases, which helps the eye and brain process language in easier chunks. Skilled readers do this automatically, taking in chunks of language per glance rather than processing one word at a time. This is why the same passage can feel effortless to one reader and laborious to another. The difference often lies not in vocabulary, but in how efficiently the eye and brain carve the sentence into natural units. When spacing cues are added at phrase boundaries, even struggling readers begin to show eye-movement patterns closer to those of fluent readers, with fewer regressions and shorter fixation durations, making reading feel less effortful.";
 
 type Mode = "pseudosyntactic" | "syntactic";
+type ReadingSupport = "balanced" | "strong";
 
 function friendlyMode(modeUsed: string): string {
-  if (modeUsed === "syntactic") return "Syntactic mode";
-  if (modeUsed === "pseudosyntactic") return "Pseudosyntactic mode";
+  if (modeUsed === "syntactic") return "Grammar Parser";
+  if (modeUsed === "pseudosyntactic") return "Quick Pass";
   return "Keyword mode";
 }
 
 function modeLabel(mode: Mode): string {
-  return mode === "syntactic" ? "Syntactic" : "Pseudosyntactic";
+  return mode === "syntactic" ? "Grammar Parser" : "Quick Pass";
 }
 
 function isFallbackMode(modeUsed: string): boolean {
@@ -94,10 +94,9 @@ function Home() {
   const [heroVisible, setHeroVisible] = useState(true);
 
   const [state, setState] = useState({
-    mode: "syntactic" as Mode,
+    mode: "pseudosyntactic" as Mode,
     language: "auto",
-    spacingWidth: 0,
-    chunkDensity: 1,
+    readingSupport: "balanced" as ReadingSupport,
   });
 
   const [previewText, setPreviewText] = useState(defaultPreviewText);
@@ -127,10 +126,9 @@ function Home() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         text: heroSentence,
-        mode: "syntactic",
+        mode: "pseudosyntactic",
         language: "auto",
-        spacing_width: "subtle",
-        chunk_density: "medium",
+        chunk_density: "balanced",
       }),
     })
       .then((r) => (r.ok ? r.json() : null))
@@ -157,18 +155,6 @@ function Home() {
     const handler = setTimeout(async () => {
       setPreviewLoading(true);
       try {
-        const spacingStr =
-          state.spacingWidth === 0
-            ? "subtle"
-            : state.spacingWidth === 1
-              ? "medium"
-              : "strong";
-        const densityStr =
-          state.chunkDensity === 0
-            ? "subtle"
-            : state.chunkDensity === 1
-              ? "medium"
-              : "obvious";
         const res = await fetch("/api/preview", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -176,8 +162,7 @@ function Home() {
             text: previewText,
             mode: state.mode,
             language: state.language,
-            spacing_width: spacingStr,
-            chunk_density: densityStr,
+            chunk_density: state.readingSupport,
           }),
         });
         if (res.ok) {
@@ -229,22 +214,7 @@ function Home() {
     formData.append("file", file);
     formData.append("mode", state.mode);
     formData.append("language", state.language);
-    formData.append(
-      "spacing_width",
-      state.spacingWidth === 0
-        ? "subtle"
-        : state.spacingWidth === 1
-          ? "medium"
-          : "strong",
-    );
-    formData.append(
-      "chunk_density",
-      state.chunkDensity === 0
-        ? "subtle"
-        : state.chunkDensity === 1
-          ? "medium"
-          : "obvious",
-    );
+    formData.append("chunk_density", state.readingSupport);
 
     try {
       const res = await fetch("/api/process", {
@@ -313,8 +283,8 @@ function Home() {
     setDownloadUrl("");
   };
 
-  const getSpacingLabel = (val: number) => ["Subtle", "Medium", "Strong"][val];
-  const getDensityLabel = (val: number) => ["Subtle", "Medium", "Obvious"][val];
+  const getSupportLabel = (val: ReadingSupport) =>
+    val === "balanced" ? "Balanced" : "Strong";
   const showFallback = previewModeUsed
     ? isFallbackMode(previewModeUsed)
     : false;
@@ -465,7 +435,7 @@ function Home() {
                             htmlFor="mode-pseudo"
                             className="cursor-pointer font-normal"
                           >
-                            Pseudosyntactic
+                            Quick Pass
                           </Label>
                         </div>
                         <Tooltip>
@@ -478,11 +448,12 @@ function Home() {
                             </button>
                           </TooltipTrigger>
                           <TooltipContent className="max-w-[260px] p-3 text-sm">
-                            A fast, statistical guess at where phrases begin,
-                            from word patterns rather than full grammar. Like
-                            the quick first-pass estimate your brain makes
-                            before it fully parses a sentence. Subtle, frequent
-                            cues.
+                            A fast, statistical read of where phrases begin,
+                            from word-pattern cues rather than full grammar. It
+                            mirrors the quick first-pass your eyes already make.
+                            In head-to-head research this rough method actually
+                            beat full grammar parsing for readability, which is
+                            why it's the default.
                           </TooltipContent>
                         </Tooltip>
                       </div>
@@ -497,7 +468,7 @@ function Home() {
                             htmlFor="mode-syntactic"
                             className="cursor-pointer font-normal"
                           >
-                            Syntactic
+                            Grammar Parser
                           </Label>
                         </div>
                         <Tooltip>
@@ -510,10 +481,10 @@ function Home() {
                             </button>
                           </TooltipTrigger>
                           <TooltipContent className="max-w-[260px] p-3 text-sm">
-                            A full grammatical analysis of each sentence. Breaks
-                            land only at real clause and phrase boundaries, and
-                            tightly bound word groups are never split. More
-                            precise, sometimes sparser.
+                            A complete grammatical analysis of each sentence
+                            before placing breaks. More linguistically precise,
+                            but precision isn't what helps reading here. Kept as
+                            a comparison option.
                           </TooltipContent>
                         </Tooltip>
                       </div>
@@ -539,90 +510,96 @@ function Home() {
                   </div>
                 </div>
 
-                {/* Right col: Sliders */}
-                <div className="space-y-8">
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium">
-                          Spacing Width
-                        </Label>
+                {/* Right col: Reading Support */}
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium">
+                        Reading Support
+                      </Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            className="text-muted-foreground hover:text-foreground"
+                            data-testid="tooltip-support"
+                          >
+                            <InfoIcon className="h-4 w-4" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-[240px] p-3 text-sm">
+                          Controls how often phrase gaps appear. Balanced is
+                          tuned to how fluent eyes naturally group text. Strong
+                          adds finer breaks especially beneficial for dense
+                          material or developing readers.
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <RadioGroup
+                      value={state.readingSupport}
+                      onValueChange={(v: ReadingSupport) =>
+                        setState({ ...state, readingSupport: v })
+                      }
+                      className="flex flex-col gap-2"
+                      data-testid="radio-support"
+                    >
+                      <div className="flex items-center justify-between bg-muted/20 px-3 py-2.5 rounded-md border border-border/50">
+                        <div className="flex items-center gap-2">
+                          <RadioGroupItem
+                            value="balanced"
+                            id="support-balanced"
+                          />
+                          <Label
+                            htmlFor="support-balanced"
+                            className="cursor-pointer font-normal"
+                          >
+                            Balanced
+                          </Label>
+                        </div>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
-                              className="text-muted-foreground hover:text-foreground"
-                              data-testid="tooltip-spacing"
+                              className="text-muted-foreground hover:text-foreground ml-1"
+                              data-testid="tooltip-balanced"
                             >
-                              <InfoIcon className="h-4 w-4" />
+                              <InfoIcon className="h-3.5 w-3.5" />
                             </button>
                           </TooltipTrigger>
-                          <TooltipContent className="max-w-[240px] p-3 text-sm">
-                            How wide each inserted gap is, from a thin sliver to
-                            a full em space. Changes the size of each break, not
-                            how many there are.
+                          <TooltipContent className="max-w-[260px] p-3 text-sm">
+                            Breaks at the main phrase boundaries, keeping groups
+                            around 2 to 3 words, tuned to how fluent eyes
+                            naturally group text. Best for everyday reading.
                           </TooltipContent>
                         </Tooltip>
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        {getSpacingLabel(state.spacingWidth)}
-                      </span>
-                    </div>
-                    <Slider
-                      value={[state.spacingWidth]}
-                      max={2}
-                      step={1}
-                      onValueChange={(v) =>
-                        setState({ ...state, spacingWidth: v[0] })
-                      }
-                      data-testid="slider-spacing"
-                    />
-                    <div className="flex justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
-                      <span>Subtle</span>
-                      <span>Medium</span>
-                      <span>Strong</span>
-                    </div>
-                  </div>
 
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium">
-                          Chunk Density
-                        </Label>
+                      <div className="flex items-center justify-between bg-muted/20 px-3 py-2.5 rounded-md border border-border/50">
+                        <div className="flex items-center gap-2">
+                          <RadioGroupItem value="strong" id="support-strong" />
+                          <Label
+                            htmlFor="support-strong"
+                            className="cursor-pointer font-normal"
+                          >
+                            Strong
+                          </Label>
+                        </div>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
-                              className="text-muted-foreground hover:text-foreground"
-                              data-testid="tooltip-density"
+                              className="text-muted-foreground hover:text-foreground ml-1"
+                              data-testid="tooltip-strong"
                             >
-                              <InfoIcon className="h-4 w-4" />
+                              <InfoIcon className="h-3.5 w-3.5" />
                             </button>
                           </TooltipTrigger>
-                          <TooltipContent className="max-w-[240px] p-3 text-sm">
-                            How often breaks appear. Subtle keeps phrases long
-                            and breaks rare; Obvious breaks more often into
-                            smaller chunks.
+                          <TooltipContent className="max-w-[260px] p-3 text-sm">
+                            Finer breaks into smaller groups. Research shows
+                            this extra support especially helps developing and
+                            non-native readers, and it can help anyone tackling
+                            dense or difficult material.
                           </TooltipContent>
                         </Tooltip>
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        {getDensityLabel(state.chunkDensity)}
-                      </span>
-                    </div>
-                    <Slider
-                      value={[state.chunkDensity]}
-                      max={2}
-                      step={1}
-                      onValueChange={(v) =>
-                        setState({ ...state, chunkDensity: v[0] })
-                      }
-                      data-testid="slider-density"
-                    />
-                    <div className="flex justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
-                      <span>Subtle</span>
-                      <span>Medium</span>
-                      <span>Obvious</span>
-                    </div>
+                    </RadioGroup>
                   </div>
                 </div>
               </div>
@@ -761,19 +738,20 @@ function Home() {
                   </strong>{" "}
                   mode,{" "}
                   <strong className="text-foreground">
-                    {getSpacingLabel(state.spacingWidth).toLowerCase()}
+                    {getSupportLabel(state.readingSupport).toLowerCase()}
                   </strong>{" "}
-                  spacing,{" "}
-                  <strong className="text-foreground">
-                    {getDensityLabel(state.chunkDensity).toLowerCase()}
-                  </strong>{" "}
-                  density (
+                  support (
                   {state.language === "auto"
                     ? "auto-detect language"
                     : state.language}
                   ).
                 </span>
               </div>
+
+              {/* Left-align reminder */}
+              <p className="text-xs text-muted-foreground/70 text-center max-w-sm leading-relaxed">
+                For best results, set your Kindle to <strong className="text-muted-foreground">left-aligned (ragged-right)</strong> text. Justified text stretches normal spaces and can cancel out the phrase spacing.
+              </p>
 
               {/* Process button */}
               <Button
@@ -991,19 +969,21 @@ function Home() {
             </h4>
             <div className="grid md:grid-cols-2 gap-6">
               <div className="bg-muted/30 border border-border/40 rounded-xl p-5 space-y-2">
-                <p className="font-medium text-foreground">Pseudosyntactic</p>
+                <p className="font-medium text-foreground">Quick Pass</p>
                 <p className="text-muted-foreground text-sm leading-relaxed">
-                  Mirrors the brain's fast first guess at sentence structure,
-                  reading word patterns to place gentle, frequent cues. Uses
-                  statistical heuristics, not grammar rules.
+                  A fast, statistical read of where phrases begin, from
+                  word-pattern cues rather than full grammar. Mirrors the quick
+                  first-pass your eyes already make. In head-to-head research
+                  this rough method actually beat full grammar parsing for
+                  readability — which is why it's the default.
                 </p>
               </div>
               <div className="bg-muted/30 border border-border/40 rounded-xl p-5 space-y-2">
-                <p className="font-medium text-foreground">Syntactic</p>
+                <p className="font-medium text-foreground">Grammar Parser</p>
                 <p className="text-muted-foreground text-sm leading-relaxed">
-                  Performs a full grammatical parse, breaking only at genuine
-                  clause and phrase boundaries and never inside tightly bound
-                  groups. More precise.
+                  A complete grammatical analysis of each sentence before
+                  placing breaks. More linguistically precise, but precision
+                  isn't what helps reading here. Kept as a comparison option.
                 </p>
               </div>
             </div>
@@ -1028,16 +1008,24 @@ function Home() {
                 a: "PhraseFlow outputs a standard EPUB file. Any e-reader that accepts EPUBs will work, including Kindle, Kobo, Apple Books, and most reading apps. The spacing is inline, so it survives font-size changes and reflow without breaking.",
               },
               {
+                q: "Does this actually work?",
+                a: "Across roughly two dozen studies of phrase-based spacing, the ones that reached statistical significance averaged about a 12.7% gain in comprehension and a 9.9% gain in reading speed; several other studies found no significant effect, so it is best treated as a real but modest, not guaranteed, improvement. The benefit is largest for developing, average, and non-native readers — in one study weaker readers improved about 37% versus about 6% for the strongest readers — and on harder material. Importantly, the gain comes from breaking at the right phrase boundaries, not from extra whitespace: a control condition with the same amount of extra space spread evenly produced no benefit at all (Jandreau & Bever 1992; Bever et al. 1992).",
+              },
+              {
                 q: "Does PhraseFlow remove DRM?",
                 a: "No, and it can't. PhraseFlow refuses to process any EPUB with DRM and will tell you so clearly. It only works on DRM-free files: books you authored, public-domain texts, or files you've already legally stripped through your own means.",
               },
               {
-                q: "How do I choose between Syntactic and Pseudosyntactic mode?",
-                a: "Syntactic uses a full grammar parse, and places breaks only at genuine clause and phrase boundaries. Pseudosyntactic uses a fast statistical guess based on word patterns, leading to more frequent cues. Try both in the live preview and go with what feels more natural. We expect to settle on a single recommended mode once real-world reading tests are in.",
+                q: "How do I choose between Quick Pass and Grammar Parser?",
+                a: "Quick Pass reads word-pattern cues to guess phrase boundaries — the same rough first-pass your brain makes before fully parsing a sentence. Grammar Parser runs a complete grammatical analysis before placing breaks. Interestingly, head-to-head research found the faster statistical method (Quick Pass) matched or beat the precise grammar parse for readability, which is why Quick Pass is the default. Try Grammar Parser if you want to compare, but most readers won't notice a difference.",
               },
               {
-                q: "Can I adjust the spacing?",
-                a: "Yes. Two sliders let you control Chunk Density (how often breaks appear) and Spacing Width (how wide each gap is). The live preview updates as you move them, so you can dial in your preference before processing any file.",
+                q: "Can I adjust the Reading Support level?",
+                a: "Yes. The Reading Support control lets you choose between Balanced and Strong. Balanced breaks at major phrase boundaries, keeping groups around 2–3 words — ideal for everyday reading. Strong adds finer breaks, which research shows especially helps developing and non-native readers and anyone tackling dense material. The live preview updates immediately so you can see the difference before processing any file.",
+              },
+              {
+                q: "Why set my Kindle to left-aligned?",
+                a: "Kindle's default justified layout stretches the normal spaces between words to fill each line. This stretching is unpredictable — it varies line by line — which can erase the contrast between ordinary word spaces and the phrase gaps PhraseFlow inserts. All the supporting research was conducted on left-aligned (ragged-right) text, where word spaces stay a fixed size and the phrase gaps stand out clearly. PhraseFlow injects a left-alignment rule inside the processed file as a best effort, but your device's own setting can override it, so it's worth setting it manually too: on a Kindle, go to Aa → Alignment → Left.",
               },
               {
                 q: "What if I don't like the result?",

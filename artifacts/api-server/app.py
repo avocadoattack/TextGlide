@@ -46,8 +46,7 @@ def add_cors(response):
 # ---------------------------------------------------------------------------
 
 _VALID_MODES = {"pseudosyntactic", "syntactic"}
-_VALID_WIDTHS = {"subtle", "medium", "strong"}
-_VALID_DENSITIES = {"subtle", "medium", "obvious"}
+_VALID_DENSITIES = {"balanced", "strong"}
 _VALID_LANGS = {"auto", "en", "es"}
 
 
@@ -78,16 +77,15 @@ def preview():
 
     data = request.get_json(silent=True) or {}
     text = str(data.get("text", ""))[:2000]  # cap input
-    mode = _safe(data.get("mode", "simple"), _VALID_MODES, "simple")
-    spacing_width = _safe(data.get("spacing_width", "subtle"), _VALID_WIDTHS, "subtle")
-    chunk_density = _safe(data.get("chunk_density", "subtle"), _VALID_DENSITIES, "subtle")
+    mode = _safe(data.get("mode", "pseudosyntactic"), _VALID_MODES, "pseudosyntactic")
+    chunk_density = _safe(data.get("chunk_density", "balanced"), _VALID_DENSITIES, "balanced")
     language = _safe(data.get("language", "auto"), _VALID_LANGS, "auto")
 
     if not text.strip():
         return jsonify({"result": "", "mode_used": mode})
 
     try:
-        result, mode_used = preview_text(text, mode, spacing_width, chunk_density, language)
+        result, mode_used = preview_text(text, mode, chunk_density, language)
         return jsonify({"result": result, "mode_used": mode_used})
     except Exception:
         traceback.print_exc()
@@ -112,9 +110,8 @@ def process():
     if not file.filename.lower().endswith(".epub"):
         return jsonify({"error": "Please upload an EPUB file (.epub)."}), 400
 
-    mode = _safe(request.form.get("mode", "simple"), _VALID_MODES, "simple")
-    spacing_width = _safe(request.form.get("spacing_width", "subtle"), _VALID_WIDTHS, "subtle")
-    chunk_density = _safe(request.form.get("chunk_density", "subtle"), _VALID_DENSITIES, "subtle")
+    mode = _safe(request.form.get("mode", "pseudosyntactic"), _VALID_MODES, "pseudosyntactic")
+    chunk_density = _safe(request.form.get("chunk_density", "balanced"), _VALID_DENSITIES, "balanced")
     language = _safe(request.form.get("language", "auto"), _VALID_LANGS, "auto")
 
     tmp_dir = tempfile.mkdtemp(prefix="phraseflow_")
@@ -136,7 +133,7 @@ def process():
 
         try:
             epub_bytes, mode_used = process_epub(
-                input_path, mode, spacing_width, chunk_density, language
+                input_path, mode, chunk_density, language
             )
         except Exception:
             traceback.print_exc()
@@ -164,12 +161,14 @@ def process():
 
 
 def _fallback_message(requested: str, actual: str) -> str:
+    names = {"pseudosyntactic": "Quick Pass", "syntactic": "Grammar Parser"}
+    requested_label = names.get(requested, requested.capitalize())
     if actual == "keyword_fallback":
         return (
-            f"{requested.capitalize()} mode was requested but the grammar model "
+            f"{requested_label} mode was requested but the grammar model "
             "could not be loaded. A keyword heuristic was used instead."
         )
-    return f"Mode requested: {requested}. Mode used: {actual}."
+    return f"Mode requested: {requested_label}. Mode used: {actual}."
 
 
 # ---------------------------------------------------------------------------

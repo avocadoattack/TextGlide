@@ -1,15 +1,21 @@
 """
 PhraseFlow EPUB processor.
 
-Inserts subtle spacing at major phrase boundaries to aid reading comprehension.
-Only text nodes are ever modified — tags, attributes, scripts, styles, and
-intra-word characters are never touched.
+Inserts a thin-space gap (U+2009) at major phrase boundaries to aid reading
+comprehension. Only text nodes are ever modified — tags, attributes, scripts,
+styles, and intra-word characters are never touched.
 
 Chunking modes:
-  Pseudosyntactic – POS-tag heuristic (spaCy); falls back to keyword list if spaCy absent.
-  Syntactic       – Full dependency-parse (spaCy); falls back to keyword list if spaCy absent.
+  Quick Pass (pseudosyntactic) — POS-tag heuristic (spaCy); keyword fallback if unavailable.
+  Grammar Parser (syntactic)  — Full dependency-parse (spaCy); keyword fallback if unavailable.
+
+Reading Support tiers (controls break frequency):
+  Balanced — conjunctions + prepositions; min 14 chars per chunk.
+  Strong   — same plus relative pronouns; min 10 chars per chunk.
 
 DRM detection: refuses EPUBs that have <EncryptedData> in META-INF/encryption.xml.
+
+All calibration constants imported from phraseflow_config (single source of truth).
 """
 
 from __future__ import annotations
@@ -22,24 +28,11 @@ from typing import Literal
 
 from bs4 import BeautifulSoup, NavigableString, Tag
 
+from phraseflow_config import DENSITY_CFG, GAP_CHAR
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-
-# Spacing width → Unicode gap character
-GAP_CHARS: dict[str, str] = {
-    "subtle": "\u2009",   # THIN SPACE  (~1/5 em)
-    "medium": "\u2002",   # EN SPACE    (~1/2 em)
-    "strong": "\u2003",   # EM SPACE    (1 em)
-}
-
-# Chunk density → (min_chars_per_chunk, boundary_level)
-# boundary_level: 1=major only, 2=major+PP, 3=major+PP+NP
-DENSITY_CFG: dict[str, dict] = {
-    "subtle":  {"min_chars": 22, "level": 1},
-    "medium":  {"min_chars": 14, "level": 2},
-    "obvious": {"min_chars":  7, "level": 3},
-}
 
 # Keyword fallback function words — English (used only when spaCy is unavailable)
 _FALLBACK_WORDS_EN: set[str] = {
@@ -64,6 +57,10 @@ SKIP_TAGS = frozenset({"script", "style", "code", "pre", "kbd", "samp", "var"})
 
 # EPUB content MIME types
 CONTENT_MIME_TYPES = frozenset({"application/xhtml+xml", "text/html"})
+
+# CSS injected into every processed content document for best-effort left-alignment.
+# Justified text stretches normal spaces unpredictably and can cancel out phrase gaps.
+_LEFT_ALIGN_CSS = "p,div,span,li,blockquote{text-align:left!important}"
 
 # ---------------------------------------------------------------------------
 # Language detection
@@ -120,7 +117,7 @@ def _load_model(lang: str) -> _ModelState:
 
 
 # ---------------------------------------------------------------------------
-# Glued-unit detection (positions where we must NOT break) — Syntactic mode
+# Glued-unit detection (positions where we must NOT break) — Grammar Parser mode
 # ---------------------------------------------------------------------------
 
 def _forbidden_breaks(tokens: list) -> set[int]:
@@ -150,34 +147,24 @@ def _forbidden_breaks(tokens: list) -> set[int]:
 
         if prev.dep_ == "det" and prev.head == tok:
             forbidden.add(tok.i)
-
         if prev.dep_ == "advmod" and prev.head == tok:
             forbidden.add(tok.i)
-
         if prev.dep_ in ("aux", "auxpass") and prev.head == tok:
             forbidden.add(tok.i)
-
         if prev.dep_ == "neg":
             forbidden.add(tok.i)
-
         if prev.dep_ in ("prt", "compound:prt"):
             forbidden.add(tok.i)
-
         if prev.dep_ == "mark" and prev.text.lower() == "to":
             forbidden.add(tok.i)
-
         if prev.pos_ == "ADP" and tok.dep_ in ("pobj", "dobj", "nmod"):
             forbidden.add(tok.i)
-
         if prev.dep_ == "nummod" and prev.head == tok:
             forbidden.add(tok.i)
-
         if prev.dep_ == "amod" and prev.head == tok:
             forbidden.add(tok.i)
-
         if prev.dep_ in ("compound", "nn") and prev.head == tok:
             forbidden.add(tok.i)
-
         if prev.dep_ in ("poss", "possessive") and prev.head == tok:
             forbidden.add(tok.i)
 
@@ -248,18 +235,18 @@ def _forced_breaks_punct(sent, forbidden: set[int]) -> set[int]:
 
 
 # ---------------------------------------------------------------------------
-# POS-based chunker (Pseudosyntactic mode)
+# POS-based chunker (Quick Pass / pseudosyntactic mode)
 # ---------------------------------------------------------------------------
 
 # POS tags that signal a new phrase boundary, by density level
 _PSEUDO_POS_L1 = frozenset({"CCONJ", "SCONJ"})        # coordinating + subordinating conj
 _PSEUDO_POS_L2 = frozenset({"CCONJ", "SCONJ", "ADP"}) # + prepositions
-_PSEUDO_PRON_L3 = frozenset({"who", "which", "whom"})  # relative pronouns (level 3 only)
+_PSEUDO_PRON_L3 = frozenset({"who", "which", "whom"})  # relative pronouns (strong only)
 
 
 def _breaks_pos(sent, level: int) -> set[int]:
     """
-    POS-based break candidates for Pseudosyntactic mode.
+    POS-based break candidates for Quick Pass mode.
     No dependency tree consulted — only POS tags and the token's position.
     """
     trigger_pos = _PSEUDO_POS_L2 if level >= 2 else _PSEUDO_POS_L1
@@ -275,25 +262,25 @@ def _breaks_pos(sent, level: int) -> set[int]:
 
 
 def _patch_pseudosyntactic(
-    text: str, gap: str, density: str, lang: str
+    text: str, chunk_density: str, lang: str
 ) -> tuple[str, str]:
     """
-    POS-heuristic chunker for Pseudosyntactic mode.
+    POS-heuristic chunker for Quick Pass mode.
     Returns (patched_text, mode_used).
     mode_used: 'pseudosyntactic' on success, 'keyword_fallback' if spaCy unavailable.
     """
     state = _load_model(lang)
-    cfg = DENSITY_CFG[density]
+    cfg = DENSITY_CFG[chunk_density]
     level = cfg["level"]
     min_chars = cfg["min_chars"]
 
     if state.failed or state.nlp is None:
-        return _keyword_fallback(text, gap, density, lang), "keyword_fallback"
+        return _keyword_fallback(text, chunk_density, lang), "keyword_fallback"
 
     try:
         doc = state.nlp(text)
     except Exception:
-        return _keyword_fallback(text, gap, density, lang), "keyword_fallback"
+        return _keyword_fallback(text, chunk_density, lang), "keyword_fallback"
 
     result_parts: list[str] = []
     for sent in doc.sents:
@@ -301,19 +288,18 @@ def _patch_pseudosyntactic(
         if not tokens:
             continue
         raw_breaks = _breaks_pos(sent, level)
-        # Use empty forbidden set — pseudosyntactic doesn't consult the dep tree
         forced = _forced_breaks_punct(sent, set())
         breaks = _apply_min_chars(raw_breaks, tokens, min_chars, forced)
-        result_parts.append(_insert_gaps(tokens, breaks, gap))
+        result_parts.append(_insert_gaps(tokens, breaks, GAP_CHAR))
 
     return "".join(result_parts), "pseudosyntactic"
 
 
 # ---------------------------------------------------------------------------
-# Dependency-parse chunker (Syntactic mode)
+# Dependency-parse chunker (Grammar Parser / syntactic mode)
 # ---------------------------------------------------------------------------
 
-# dep labels that trigger a break at ALL density levels (level 1+)
+# dep labels that trigger a break at ALL density levels
 _BREAK_L1 = frozenset({
     "prep",   # prepositional phrase boundary
     "advcl",  # adverbial clause ("while the city came awake")
@@ -330,15 +316,14 @@ _CLAUSE_DEPS = frozenset({"advcl", "relcl", "ccomp", "xcomp", "conj"})
 
 def _breaks_dep(sent, level: int, forbidden: set[int]) -> set[int]:
     """
-    Dependency-parse break candidates for Syntactic mode.
+    Dependency-parse break candidates for Grammar Parser mode.
 
     For clause-introducing deps (advcl, relcl, ccomp, xcomp, conj) the break
     lands at tok.left_edge — the leftmost token of the entire subtree — so the
     relative pronoun, subject, or subordinator stays with its clause.
 
-    L1 (subtle)  : _CLAUSE_DEPS (left_edge) + prep, cc, mark (tok itself)
-    L2 (medium)  : same as L1
-    L3 (obvious) : same as L2 + nsubj/nsubjpass when head is ROOT
+    Balanced : _CLAUSE_DEPS (left_edge) + prep, cc, mark (tok itself)
+    Strong   : same as Balanced + nsubj/nsubjpass when head is ROOT
     """
     breaks: set[int] = set()
 
@@ -388,13 +373,14 @@ def _insert_gaps(tokens: list, breaks: set[int], gap: str) -> str:
 # High-level patch functions
 # ---------------------------------------------------------------------------
 
-def _keyword_fallback(text: str, gap: str, density: str, lang: str) -> str:
+def _keyword_fallback(text: str, density: str, lang: str) -> str:
     """
     Last-resort keyword/structure-word heuristic — no spaCy required.
     Used only when spaCy itself fails to load.
     """
     words = _FALLBACK_WORDS_EN if lang == "en" else _FALLBACK_WORDS_ES
     min_chars = DENSITY_CFG[density]["min_chars"]
+    gap = GAP_CHAR
 
     patched = SENTENCE_END_RE.sub(lambda m: m.group(1) + gap + " ", text)
 
@@ -416,24 +402,24 @@ def _keyword_fallback(text: str, gap: str, density: str, lang: str) -> str:
     return patched
 
 
-def _patch_syntactic(text: str, gap: str, density: str, lang: str) -> tuple[str, str]:
+def _patch_syntactic(text: str, chunk_density: str, lang: str) -> tuple[str, str]:
     """
-    Full dependency-parse chunker for Syntactic mode.
+    Full dependency-parse chunker for Grammar Parser mode.
     Returns (patched_text, mode_used).
     mode_used: 'syntactic' on success, 'keyword_fallback' if spaCy unavailable.
     """
     state = _load_model(lang)
     if state.failed or state.nlp is None:
-        return _keyword_fallback(text, gap, density, lang), "keyword_fallback"
+        return _keyword_fallback(text, chunk_density, lang), "keyword_fallback"
 
-    cfg = DENSITY_CFG[density]
+    cfg = DENSITY_CFG[chunk_density]
     level = cfg["level"]
     min_chars = cfg["min_chars"]
 
     try:
         doc = state.nlp(text)
     except Exception:
-        return _keyword_fallback(text, gap, density, lang), "keyword_fallback"
+        return _keyword_fallback(text, chunk_density, lang), "keyword_fallback"
 
     result_parts: list[str] = []
     for sent in doc.sents:
@@ -444,7 +430,7 @@ def _patch_syntactic(text: str, gap: str, density: str, lang: str) -> tuple[str,
         forced = _forced_breaks_punct(sent, forbidden)
         raw_breaks = _breaks_dep(sent, level, forbidden)
         breaks = _apply_min_chars(raw_breaks, tokens, min_chars, forced)
-        result_parts.append(_insert_gaps(tokens, breaks, gap))
+        result_parts.append(_insert_gaps(tokens, breaks, GAP_CHAR))
 
     return "".join(result_parts), "syntactic"
 
@@ -463,15 +449,13 @@ def _is_in_skip_tag(node) -> bool:
 def _patch_document(
     html_bytes: bytes,
     mode: str,
-    spacing_width: str,
     chunk_density: str,
     language: str,
 ) -> tuple[bytes, str]:
     """
-    Patch all text nodes in one XHTML document.
+    Patch all text nodes in one XHTML document and inject left-align CSS.
     Returns (patched_bytes, mode_actually_used).
     """
-    gap = GAP_CHARS.get(spacing_width, GAP_CHARS["subtle"])
     mode_used = mode
 
     try:
@@ -481,6 +465,15 @@ def _patch_document(
             soup = BeautifulSoup(html_bytes, "html.parser")
         except Exception:
             return html_bytes, mode
+
+    # Inject left-alignment as best effort — Kindle justification stretches normal
+    # spaces and can cancel out phrase gaps. We inject into <head> so it applies
+    # document-wide; the device setting can still override it.
+    head = soup.find("head")
+    if head:
+        style_tag = soup.new_tag("style")
+        style_tag.string = _LEFT_ALIGN_CSS
+        head.insert(0, style_tag)
 
     for node in list(soup.find_all(string=True)):
         if not isinstance(node, NavigableString):
@@ -499,9 +492,9 @@ def _patch_document(
             eff_lang = detect_language(original)
 
         if mode == "syntactic":
-            patched, mode_used = _patch_syntactic(original, gap, chunk_density, eff_lang)
+            patched, mode_used = _patch_syntactic(original, chunk_density, eff_lang)
         else:
-            patched, mode_used = _patch_pseudosyntactic(original, gap, chunk_density, eff_lang)
+            patched, mode_used = _patch_pseudosyntactic(original, chunk_density, eff_lang)
 
         if patched != original:
             node.replace_with(NavigableString(patched))
@@ -516,7 +509,6 @@ def _patch_document(
 def preview_text(
     text: str,
     mode: str,
-    spacing_width: str,
     chunk_density: str,
     language: str,
 ) -> tuple[str, str]:
@@ -527,15 +519,13 @@ def preview_text(
     if not text.strip():
         return text, mode
 
-    gap = GAP_CHARS.get(spacing_width, GAP_CHARS["subtle"])
-
     eff_lang = language
     if language == "auto":
         eff_lang = detect_language(text)
 
     if mode == "syntactic":
-        return _patch_syntactic(text, gap, chunk_density, eff_lang)
-    return _patch_pseudosyntactic(text, gap, chunk_density, eff_lang)
+        return _patch_syntactic(text, chunk_density, eff_lang)
+    return _patch_pseudosyntactic(text, chunk_density, eff_lang)
 
 
 # ---------------------------------------------------------------------------
@@ -594,7 +584,6 @@ def _find_opf(zf: zipfile.ZipFile) -> str | None:
 def process_epub(
     epub_path: str,
     mode: str,
-    spacing_width: str,
     chunk_density: str,
     language: str,
 ) -> tuple[bytes, str]:
@@ -614,7 +603,7 @@ def process_epub(
                 if name in content_paths:
                     try:
                         patched, mu = _patch_document(
-                            data, mode, spacing_width, chunk_density, language
+                            data, mode, chunk_density, language
                         )
                         data = patched
                         mode_used = mu
