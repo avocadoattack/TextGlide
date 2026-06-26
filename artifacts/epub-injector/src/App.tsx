@@ -667,9 +667,13 @@ function Home() {
               <p className="font-medium text-foreground">Cognitive load and cognitive fluency</p>
               <p>Pre-grouping words lowers the working-memory cost of reading (load) and raises the felt ease of processing (fluency), which tracks with comprehension and stamina.</p>
             </div>
-            <div className="space-y-1 md:col-span-2">
+            <div className="space-y-1">
               <p className="font-medium text-foreground">Eye-fixation span</p>
               <p>The eye resolves only about 9 to 15 characters per fixation (Legge et al., 1997). Chunks sized near that span are read with fewer, shorter fixations and less backtracking (Magloire, 2002).</p>
+            </div>
+            <div className="space-y-1">
+              <p className="font-medium text-foreground">Regression &amp; backtracking</p>
+              <p>When a phrase boundary is missed, the eye doubles back to re-read. Poor readers regress far more often than skilled ones — up to 43% fewer regressions when text is phrase-cued (Magloire, 2002). Reducing backtracking is one of the clearest measurable gains from chunking.</p>
             </div>
           </div>
 
@@ -685,14 +689,14 @@ function Home() {
                 <p className="text-muted-foreground text-sm leading-relaxed">Performs a full grammatical parse, breaking only at genuine clause and phrase boundaries and never inside tightly bound groups. More precise.</p>
               </div>
             </div>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              <strong className="text-foreground">Why both?</strong> They trade coverage against precision differently, and the better fit depends on the reader and the text. We expect to settle on a single default once real reading shows which one wins.
+            <p className="text-muted-foreground text-sm leading-relaxed text-center">
+              <strong className="text-foreground">Why both?</strong> They trade coverage against precision differently. But, we expect to settle on one single coherent mode, soon.
             </p>
           </div>
 
           <div className="space-y-4 pt-2 border-t border-border/40">
             <h4 className="font-serif text-lg text-foreground">References</h4>
-            <ul className="grid md:grid-cols-2 gap-x-10 gap-y-2 text-sm text-muted-foreground">
+            <ul className="flex flex-col gap-y-2 text-sm text-muted-foreground">
               <li>North &amp; Jenkins (1951) — ~10.9% faster reading; the foundational syntactically-cued study</li>
               <li>Graf &amp; Torrey (1966) — ~30.9% comprehension gain</li>
               <li>Mason &amp; Kendall (1979) — ~26.3% comprehension gain</li>
@@ -704,7 +708,7 @@ function Home() {
               <li>Hirotani, Frazier &amp; Rayner (2006) — prosodic boundaries</li>
             </ul>
             <p className="text-xs text-muted-foreground/70 leading-relaxed pt-2 border-t border-border/30">
-              These effect sizes span decades and methods, and several come from developer-affiliated or small studies. The direction is consistent — cueing phrases helps — but treat the magnitudes as a range, and expect individual variation.
+              These effect sizes span decades and methods, and several come from small studies. The direction is consistent — cueing phrases helps — but treat the magnitudes as a range, and expect individual variation.
             </p>
           </div>
         </section>
@@ -717,8 +721,9 @@ function Home() {
           <h3 className="font-serif text-2xl text-foreground">Why it exists</h3>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Fluent readers don't read one word at a time; they take in meaningful phrases per glance.
-            PhraseFlow rebuilds your EPUBs to gently cue those phrase groups with spacing: a free,
-            open tool that works on the device where people actually read.
+            PhraseFlow swiftly rebuilds your EPUBs to gently cue those phrase groups with carefully
+            calibrated extra spacing: a free, open-source tool that works on any e-reader that
+            accepts EPUBs.
           </p>
         </section>
 
