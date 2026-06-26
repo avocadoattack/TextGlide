@@ -629,7 +629,7 @@ function Home() {
                 <span className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm">1</span>
                 <strong className="text-foreground font-medium">Upload a DRM-free EPUB</strong>
               </div>
-              <p className="text-muted-foreground leading-relaxed text-sm">If your book has DRM, you'll need to remove it first. PhraseFlow only works with DRM-free files.</p>
+              <p className="text-muted-foreground leading-relaxed text-sm">If your book has DRM, you'll need to remove it first. PhraseFlow only works with DRM-free files, and is only compatible with EPUBS, currently.</p>
             </div>
             <div className="bg-muted/30 border border-border/40 rounded-xl p-6 space-y-3">
               <div className="flex items-center gap-3">
