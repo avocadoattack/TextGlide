@@ -641,7 +641,7 @@ function Home() {
             <div className="bg-muted/30 border border-border/40 rounded-xl p-6 space-y-3">
               <div className="flex items-center gap-3">
                 <span className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm">3</span>
-                <strong className="text-foreground font-medium">Download and send to your Kindle</strong>
+                <strong className="text-foreground font-medium">Download and send to your e-reader</strong>
               </div>
               <p className="text-muted-foreground leading-relaxed text-sm">
                 Transfer via USB cable or use Send to Kindle. Your original file is untouched — you can always re-process with different settings.
