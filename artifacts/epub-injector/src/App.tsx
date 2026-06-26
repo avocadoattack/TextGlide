@@ -307,13 +307,13 @@ function Home() {
       {/* ── 1. Hero — full viewport ─────────────────────────────────────── */}
       <section
         ref={heroRef}
-        className="relative h-screen flex flex-col items-center justify-center text-center overflow-hidden px-6"
+        className="relative min-h-screen md:h-screen flex flex-col items-center justify-center text-center overflow-hidden px-6 py-16 md:py-0"
         data-testid="section-hero"
       >
-        <div className="max-w-7xl w-full mx-auto space-y-10">
+        <div className="max-w-7xl w-full mx-auto space-y-6 md:space-y-10">
           {/* Headline with "Read in phrases" highlighter */}
           <h1
-            className="font-serif text-6xl md:text-7xl lg:text-8xl font-medium tracking-tight text-foreground leading-tight"
+            className="font-serif text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-medium tracking-tight text-foreground leading-tight"
             data-testid="hero-headline"
           >
             <Highlighter>Read in phrases</Highlighter>
@@ -323,7 +323,7 @@ function Home() {
           </h1>
 
           <p
-            className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
+            className="text-base sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
             data-testid="hero-subhead"
           >PhraseFlow adds subtle spacing at the natural phrase boundaries in your EPUBs, so your eyes group words into meaningful phrases the way fluent readers naturally do.</p>
 
@@ -332,21 +332,21 @@ function Home() {
             className="grid md:grid-cols-2 gap-4 text-left max-w-4xl mx-auto"
             data-testid="hero-comparison"
           >
-            <div className="p-8 rounded-xl bg-muted/30 border border-border/50">
-              <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-5">
+            <div className="p-5 md:p-8 rounded-xl bg-muted/30 border border-border/50">
+              <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3 md:mb-5">
                 Before
               </div>
-              <p className="font-serif text-xl leading-[2] text-foreground">
+              <p className="font-serif text-base md:text-xl leading-[2] text-foreground">
                 She wrote every morning by the window, while the city came
                 slowly awake outside and the light changed.
               </p>
             </div>
-            <div className="p-8 rounded-xl bg-primary/5 border border-primary/20 shadow-sm relative overflow-hidden">
+            <div className="p-5 md:p-8 rounded-xl bg-primary/5 border border-primary/20 shadow-sm relative overflow-hidden">
               <div className="absolute top-0 left-0 w-1 h-full bg-primary/40" />
-              <div className="text-xs uppercase tracking-wider text-primary font-semibold mb-5">
+              <div className="text-xs uppercase tracking-wider text-primary font-semibold mb-3 md:mb-5">
                 After
               </div>
-              <p className="font-serif text-xl leading-[2] text-foreground">
+              <p className="font-serif text-base md:text-xl leading-[2] text-foreground">
                 {heroAfterText}
               </p>
             </div>
@@ -368,7 +368,7 @@ function Home() {
       </section>
       {/* ── Sections below the fold ─────────────────────────────────────── */}
       <main
-        className="max-w-7xl mx-auto px-6 md:px-10 space-y-20 pt-20"
+        className="max-w-7xl mx-auto px-4 md:px-10 space-y-12 md:space-y-20 pt-12 md:pt-20"
         data-testid="main-content"
       >
         {/* 2. Live Preview */}
@@ -658,7 +658,7 @@ function Home() {
             <div className="flex flex-col items-center gap-4">
               {/* Dropzone */}
               <div
-                className={`w-full border-2 border-dashed flex flex-col items-center justify-center py-16 px-8 text-center cursor-pointer transition-colors rounded-xl ${
+                className={`w-full border-2 border-dashed flex flex-col items-center justify-center py-10 md:py-16 px-5 md:px-8 text-center cursor-pointer transition-colors rounded-xl ${
                   file
                     ? "border-primary bg-primary/5"
                     : "border-border/60 hover:border-primary/40 hover:bg-muted/30 bg-background"
@@ -734,7 +734,7 @@ function Home() {
 
               {/* Process button */}
               <Button
-                className="w-full max-w-xs h-14 text-lg font-medium shadow-md rounded-xl"
+                className="w-full md:max-w-xs h-14 text-lg font-medium shadow-md rounded-xl"
                 size="lg"
                 disabled={!file || status === "processing"}
                 onClick={handleProcess}
