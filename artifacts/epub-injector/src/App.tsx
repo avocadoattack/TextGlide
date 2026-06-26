@@ -254,7 +254,7 @@ function Home() {
           <p
             className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
             data-testid="hero-subhead"
-          >PhraseFlow adds subtle spacing at the natural phrase boundaries in your EPUBs, so your eyes group words the way fluent readers already do. Then, it hands you a file ready for your preferred e-reader.</p>
+          >PhraseFlow adds subtle spacing at the natural phrase boundaries in your EPUBs, so your eyes group words the way fluent readers already do, and it hands you a file ready for your preferred e-reader.</p>
 
           {/* Before / After cards */}
           <div className="grid md:grid-cols-2 gap-4 text-left max-w-4xl mx-auto" data-testid="hero-comparison">
