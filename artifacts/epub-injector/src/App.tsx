@@ -36,14 +36,6 @@ function isFallbackMode(modeUsed: string): boolean {
   return modeUsed === "keyword_fallback";
 }
 
-// Gap marker for the hero After card — pure whitespace, no decoration
-function Gap() {
-  return (
-    <span style={{ display: "inline-block", minWidth: "0.5em" }}>
-      {"\u2009"}
-    </span>
-  );
-}
 
 // Wobbly hand-drawn highlighter behind "Read in phrases"
 function Highlighter({ children }: { children: React.ReactNode }) {
@@ -100,6 +92,27 @@ function Home() {
   const [fallbackMsg, setFallbackMsg] = useState("");
   const [downloadUrl, setDownloadUrl] = useState("");
   const [downloadFilename, setDownloadFilename] = useState("");
+
+  const heroSentence = "She wrote every morning by the window, while the city came slowly awake outside and the light changed.";
+  const [heroAfterText, setHeroAfterText] = useState(heroSentence);
+
+  // Fetch correctly-spaced hero After text on mount
+  useEffect(() => {
+    fetch("/api/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: heroSentence,
+        mode: "syntactic",
+        language: "auto",
+        spacing_width: "subtle",
+        chunk_density: "medium",
+      }),
+    })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data?.result) setHeroAfterText(data.result); })
+      .catch(() => {});
+  }, []);
 
   // Fade chevron when hero scrolls out of view
   useEffect(() => {
@@ -270,7 +283,7 @@ function Home() {
               <div className="absolute top-0 left-0 w-1 h-full bg-primary/40" />
               <div className="text-xs uppercase tracking-wider text-primary font-semibold mb-5">After</div>
               <p className="font-serif text-xl leading-[2] text-foreground">
-                She wrote every morning<Gap /> by the window,<Gap /> while the city<Gap /> came slowly awake outside<Gap /> and the light changed.
+                {heroAfterText}
               </p>
             </div>
           </div>
