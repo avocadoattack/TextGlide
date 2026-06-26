@@ -688,7 +688,7 @@ function Home() {
               </div>
             </div>
             <p className="text-muted-foreground text-sm leading-relaxed text-center">
-              <strong className="text-foreground">Why both?</strong> They trade coverage against precision differently. But, we expect to settle on one single coherent mode, soon.
+              <strong className="text-foreground">Why both?</strong> They trade coverage against precision differently. But we expect to settle on one single coherent mode soon.
             </p>
           </div>
 
