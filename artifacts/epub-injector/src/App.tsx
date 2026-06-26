@@ -695,19 +695,17 @@ function Home() {
           <div className="space-y-4 pt-8 border-t border-border/40 mt-12">
             <h4 className="font-serif text-lg text-foreground">References</h4>
             <ul className="flex flex-col gap-y-2 text-sm text-muted-foreground">
-              <li>North &amp; Jenkins (1951) — ~10.9% faster reading; the foundational syntactically-cued study</li>
-              <li>Graf &amp; Torrey (1966) — ~30.9% comprehension gain</li>
-              <li>Mason &amp; Kendall (1979) — ~26.3% comprehension gain</li>
-              <li>Jandreau, Muncer &amp; Bever (1986) — ~17.9% faster reading</li>
-              <li>Negin (1987) — ~14.9% comprehension gain</li>
-              <li>Magloire (2002) — ~31% faster reading; eye-movement evidence</li>
-              <li>Walker et al. (2005), Visual-Syntactic Text Formatting — up to ~40% comprehension gain</li>
-              <li>Legge et al. (1997) — eye-fixation span</li>
-              <li>Hirotani, Frazier &amp; Rayner (2006) — prosodic boundaries</li>
+              <li>North & Jenkins (1951): ~10.9% faster reading; the foundational syntactically-cued study</li>
+              <li>Graf & Torrey (1966): ~30.9% comprehension gain</li>
+              <li>Mason & Kendall (1979): ~26.3% comprehension gain</li>
+              <li>Jandreau, Muncer & Bever (1986): ~17.9% faster reading</li>
+              <li>Negin (1987): ~14.9% comprehension gain</li>
+              <li>Magloire (2002): ~31% faster reading; eye-movement evidence</li>
+              <li>Walker et al. (2005), Visual-Syntactic Text Formatting: up to ~40% comprehension gain</li>
+              <li>Legge et al. (1997): eye-fixation span</li>
+              <li>Hirotani, Frazier & Rayner (2006): prosodic boundaries</li>
             </ul>
-            <p className="text-xs text-muted-foreground/70 leading-relaxed pt-2 border-t border-border/30">
-              These effect sizes span decades and methods, and several come from small studies. The direction is consistent — cueing phrases helps — but treat the magnitudes as a range, and expect individual variation.
-            </p>
+            <p className="text-xs text-muted-foreground/70 leading-relaxed pt-2 border-t border-border/30">These effect sizes span decades and methods, and several come from small studies. The direction is consistent: cueing phrases helps, but treat the magnitudes as a range, and expect individual variation.</p>
           </div>
         </section>
 
