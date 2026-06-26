@@ -657,7 +657,7 @@ function Home() {
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">Syntactically cued formatting</p>
-              <p>Making phrase boundaries visible with spacing. North &amp; Jenkins first measured the effect in 1951: readers were faster and comprehended more when phrase structure was cued.</p>
+              <p>Making phrase boundaries visible with spacing. North & Jenkins first measured the effect in 1951: readers were faster and comprehended more when phrase structure was cued. Dozens of studies have since confirmed it.</p>
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">Pseudosyntax</p>
