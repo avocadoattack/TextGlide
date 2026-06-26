@@ -694,7 +694,7 @@ function Home() {
 
           <div className="space-y-4 pt-8 border-t border-border/40 mt-12">
             <h4 className="font-serif text-lg text-foreground">References</h4>
-            <ul className="flex flex-col gap-y-2 text-sm text-muted-foreground">
+            <ul className="flex flex-col gap-y-2 text-sm text-muted-foreground list-disc pl-5">
               <li>North & Jenkins (1951): ~10.9% faster reading; the foundational syntactically-cued study</li>
               <li>Graf & Torrey (1966): ~30.9% comprehension gain</li>
               <li>Mason & Kendall (1979): ~26.3% comprehension gain</li>
