@@ -372,7 +372,7 @@ function Home() {
       </section>
       {/* ── Sections below the fold ─────────────────────────────────────── */}
       <main
-        className="max-w-7xl mx-auto px-6 md:px-10 space-y-24 pt-20"
+        className="max-w-7xl mx-auto px-6 md:px-10 space-y-20 pt-20"
         data-testid="main-content"
       >
         {/* 2. Live Preview */}
@@ -878,7 +878,7 @@ function Home() {
 
         {/* 5. How it works and the science */}
         <section
-          className="pt-8 border-t border-border/50 space-y-8"
+          className="pt-8 border-t border-border/50 space-y-6"
           data-testid="section-science"
         >
           <h3 className="font-serif text-2xl text-foreground">
@@ -978,7 +978,7 @@ function Home() {
 
         {/* FAQ */}
         <section
-          className="pt-8 border-t border-border/50 space-y-8"
+          className="pt-8 border-t border-border/50 space-y-6"
           data-testid="section-faq"
         >
           <h3 className="font-serif text-2xl text-foreground">Frequently Asked Questions</h3>
