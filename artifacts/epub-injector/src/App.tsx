@@ -663,7 +663,7 @@ function Home() {
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">Cognitive load and cognitive fluency</p>
-              <p>Pre-grouping words lowers the working-memory cost of reading (load) and raises the felt ease of processing (fluency), which tracks with comprehension and stamina — especially under fatigue.</p>
+              <p>Pre-grouping words lowers the working-memory cost of reading (load) and raises the felt ease of processing (fluency), which tracks with comprehension and stamina, especially under fatigue.</p>
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">Eye-fixation span</p>
