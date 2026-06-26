@@ -299,7 +299,7 @@ function Home() {
             data-testid="card-preview"
           >
             <div className="bg-muted/30 px-6 py-4 border-b border-border/50 flex justify-between items-center">
-              <h2 className="font-medium text-foreground">Try it — preview before you process</h2>
+              <h2 className="font-medium text-foreground">Try it ➞ Preview before you process</h2>
               {previewLoading && (
                 <Spinner className="h-4 w-4 text-primary" data-testid="preview-spinner" />
               )}
