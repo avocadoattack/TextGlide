@@ -694,7 +694,7 @@ function Home() {
             </p>
           </div>
 
-          <div className="space-y-4 pt-2 border-t border-border/40">
+          <div className="space-y-4 pt-8 border-t border-border/40 mt-12">
             <h4 className="font-serif text-lg text-foreground">References</h4>
             <ul className="flex flex-col gap-y-2 text-sm text-muted-foreground">
               <li>North &amp; Jenkins (1951) — ~10.9% faster reading; the foundational syntactically-cued study</li>
