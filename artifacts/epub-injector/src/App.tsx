@@ -215,7 +215,6 @@ function Home() {
 
   return (
     <div className="min-h-screen pb-20 selection:bg-primary/20" data-testid="page-home">
-
       {/* keyframes */}
       <style>{`
         @keyframes gentleBounce {
@@ -233,7 +232,6 @@ function Home() {
           animation: highlighterDraw 750ms ease-out 400ms both;
         }
       `}</style>
-
       {/* ── 1. Hero — full viewport ─────────────────────────────────────── */}
       <section
         ref={heroRef}
@@ -295,7 +293,6 @@ function Home() {
           />
         </div>
       </section>
-
       {/* ── Sections below the fold ─────────────────────────────────────── */}
       <main className="max-w-7xl mx-auto px-6 md:px-10 space-y-24 pt-20" data-testid="main-content">
 
@@ -632,9 +629,7 @@ function Home() {
                 <span className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm">1</span>
                 <strong className="text-foreground font-medium">Upload a DRM-free EPUB</strong>
               </div>
-              <p className="text-muted-foreground leading-relaxed text-sm">
-                If your book has DRM, you'll need to remove it first. PhraseFlow only works with unencrypted files.
-              </p>
+              <p className="text-muted-foreground leading-relaxed text-sm">If your book has DRM, you'll need to remove it first. PhraseFlow only works with DRM-free files.</p>
             </div>
             <div className="bg-muted/30 border border-border/40 rounded-xl p-6 space-y-3">
               <div className="flex items-center gap-3">
@@ -734,7 +729,6 @@ function Home() {
         </section>
 
       </main>
-
       {/* Footer */}
       <footer className="max-w-7xl mx-auto px-6 md:px-10 mt-24 pb-8 text-center space-y-2 border-t border-border/30 pt-8" data-testid="footer">
         <p className="text-sm text-foreground">
@@ -746,7 +740,6 @@ function Home() {
         </p>
         <p className="text-xs text-muted-foreground/70">PhraseFlow — a reading aid, not a medical device.</p>
       </footer>
-
     </div>
   );
 }
