@@ -682,7 +682,7 @@ function Home() {
             <div className="grid md:grid-cols-2 gap-6">
               <div className="bg-muted/30 border border-border/40 rounded-xl p-5 space-y-2">
                 <p className="font-medium text-foreground">Pseudosyntactic</p>
-                <p className="text-muted-foreground text-sm leading-relaxed">Mirrors the brain's fast first guess at sentence structure, reading word patterns to place gentle, frequent cues. Lightweight.</p>
+                <p className="text-muted-foreground text-sm leading-relaxed">Mirrors the brain's fast first guess at sentence structure, reading word patterns to place gentle, frequent cues. Uses statistical heuristics, not grammar rules. Lightweight.</p>
               </div>
               <div className="bg-muted/30 border border-border/40 rounded-xl p-5 space-y-2">
                 <p className="font-medium text-foreground">Syntactic</p>
