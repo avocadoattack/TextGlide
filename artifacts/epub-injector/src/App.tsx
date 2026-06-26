@@ -636,9 +636,7 @@ function Home() {
                 <span className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm">2</span>
                 <strong className="text-foreground font-medium">Pick a mode and adjust the sliders</strong>
               </div>
-              <p className="text-muted-foreground leading-relaxed text-sm">
-                Use the live preview to find the rhythm that suits your eyes. Syntactic mode uses full grammar analysis; Pseudosyntactic uses fast pattern detection.
-              </p>
+              <p className="text-muted-foreground leading-relaxed text-sm">Use the live preview to find the rhythm that suits you. Syntactic mode uses full grammar analysis; Pseudosyntactic uses fast pattern detection.</p>
             </div>
             <div className="bg-muted/30 border border-border/40 rounded-xl p-6 space-y-3">
               <div className="flex items-center gap-3">
