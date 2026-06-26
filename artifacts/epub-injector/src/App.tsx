@@ -722,6 +722,44 @@ function Home() {
           </div>
         </section>
 
+        {/* FAQ */}
+        <section className="pt-8 border-t border-border/50 space-y-8" data-testid="section-faq">
+          <h3 className="font-serif text-2xl text-foreground">Frequently asked questions</h3>
+          <dl className="space-y-0 divide-y divide-border/40">
+            {[
+              {
+                q: "Will PhraseFlow work with my e-reader?",
+                a: "PhraseFlow outputs a standard EPUB file. Any e-reader that accepts EPUBs will work — Kindle, Kobo, Apple Books, and most reading apps. The spacing is inline, so it survives font-size changes and reflow without breaking.",
+              },
+              {
+                q: "Does PhraseFlow remove DRM?",
+                a: "No — and it can't. PhraseFlow refuses to process any EPUB with DRM and will tell you so clearly. It only works on DRM-free files: books you authored, public-domain texts, or files you've already legally stripped through your own means.",
+              },
+              {
+                q: "How do I choose between Syntactic and Pseudosyntactic mode?",
+                a: "Syntactic uses a full grammar parse and places breaks only at genuine clause and phrase boundaries — precise, sometimes sparse. Pseudosyntactic uses a fast statistical guess from word patterns — more frequent, gentler cues. Try both on the same passage in the live preview and go with what feels more natural to read. We expect to settle on a single recommended mode once real-world reading tests are in.",
+              },
+              {
+                q: "Can I adjust the spacing?",
+                a: "Yes. Two sliders let you control Chunk Density (how often breaks appear) and Spacing Width (how wide each gap is). The live preview updates as you move them, so you can dial in your preference before processing any file.",
+              },
+              {
+                q: "What if I don't like the result?",
+                a: "Your original file is never modified. PhraseFlow processes a copy and hands you the new file — so you can always go back to the original, tweak the settings, and reprocess as many times as you like.",
+              },
+              {
+                q: "Does PhraseFlow store my books or personal data?",
+                a: "No. Uploaded files are processed in a temporary directory and deleted immediately after your download is ready. PhraseFlow does not log IP addresses, store books, or collect any personal data. Nothing you upload is ever retained or transmitted anywhere.",
+              },
+            ].map(({ q, a }) => (
+              <div key={q} className="py-6">
+                <dt className="font-serif text-base font-medium text-foreground mb-2">{q}</dt>
+                <dd className="text-muted-foreground leading-relaxed text-sm">{a}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+
         {/* 6. Why it exists */}
         <section
           className="bg-muted/30 p-8 md:p-12 rounded-2xl border border-border/50 text-center space-y-6"
