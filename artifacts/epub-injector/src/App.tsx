@@ -42,13 +42,13 @@ type Mode = "pseudosyntactic" | "syntactic";
 type ReadingSupport = "balanced" | "strong";
 
 function friendlyMode(modeUsed: string): string {
-  if (modeUsed === "syntactic") return "Grammar Parser";
-  if (modeUsed === "pseudosyntactic") return "Quick Pass";
+  if (modeUsed === "syntactic") return "Grammar Parse";
+  if (modeUsed === "pseudosyntactic") return "Natural Scan";
   return "Keyword mode";
 }
 
 function modeLabel(mode: Mode): string {
-  return mode === "syntactic" ? "Grammar Parser" : "Quick Pass";
+  return mode === "syntactic" ? "Grammar Parse" : "Natural Scan";
 }
 
 function isFallbackMode(modeUsed: string): boolean {
@@ -435,7 +435,7 @@ function Home() {
                             htmlFor="mode-pseudo"
                             className="cursor-pointer font-normal"
                           >
-                            Quick Pass
+                            Natural Scan
                           </Label>
                         </div>
                         <Tooltip>
@@ -468,7 +468,7 @@ function Home() {
                             htmlFor="mode-syntactic"
                             className="cursor-pointer font-normal"
                           >
-                            Grammar Parser
+                            Grammar Parse
                           </Label>
                         </div>
                         <Tooltip>
@@ -969,7 +969,7 @@ function Home() {
             </h4>
             <div className="grid md:grid-cols-2 gap-6">
               <div className="bg-muted/30 border border-border/40 rounded-xl p-5 space-y-2">
-                <p className="font-medium text-foreground">Quick Pass</p>
+                <p className="font-medium text-foreground">Natural Scan</p>
                 <p className="text-muted-foreground text-sm leading-relaxed">
                   A fast, statistical read of where phrases begin, from
                   word-pattern cues rather than full grammar. Mirrors the quick
@@ -979,7 +979,7 @@ function Home() {
                 </p>
               </div>
               <div className="bg-muted/30 border border-border/40 rounded-xl p-5 space-y-2">
-                <p className="font-medium text-foreground">Grammar Parser</p>
+                <p className="font-medium text-foreground">Grammar Parse</p>
                 <p className="text-muted-foreground text-sm leading-relaxed">
                   A complete grammatical analysis of each sentence before
                   placing breaks. More linguistically precise, but precision
@@ -1016,8 +1016,8 @@ function Home() {
                 a: "No, and it can't. PhraseFlow refuses to process any EPUB with DRM and will tell you so clearly. It only works on DRM-free files: books you authored, public-domain texts, or files you've already legally stripped through your own means.",
               },
               {
-                q: "How do I choose between Quick Pass and Grammar Parser?",
-                a: "Quick Pass reads word-pattern cues to guess phrase boundaries — the same rough first-pass your brain makes before fully parsing a sentence. Grammar Parser runs a complete grammatical analysis before placing breaks. Interestingly, head-to-head research found the faster statistical method (Quick Pass) matched or beat the precise grammar parse for readability, which is why Quick Pass is the default. Try Grammar Parser if you want to compare, but most readers won't notice a difference.",
+                q: "How do I choose between Natural Scan and Grammar Parse?",
+                a: "Natural Scan reads word-pattern cues to guess phrase boundaries — the same rough first-pass your brain makes before fully parsing a sentence. Grammar Parse runs a complete grammatical analysis before placing breaks. Interestingly, head-to-head research found the faster statistical method (Natural Scan) matched or beat the precise grammar parse for readability, which is why Natural Scan is the default. Try Grammar Parse if you want to compare, but most readers won't notice a difference.",
               },
               {
                 q: "Can I adjust the Reading Support level?",
