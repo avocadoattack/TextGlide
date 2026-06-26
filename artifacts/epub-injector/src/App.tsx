@@ -106,6 +106,7 @@ function Home() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [peeking, setPeeking] = useState(false);
 
+  const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<
     "idle" | "processing" | "success" | "error"
@@ -274,6 +275,42 @@ function Home() {
         err instanceof Error ? err.message : "An unexpected error occurred",
       );
     }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const dropped = e.dataTransfer.files?.[0];
+    if (!dropped) return;
+    if (!dropped.name.endsWith(".epub")) {
+      setErrorMsg("Please select a valid .epub file.");
+      setStatus("error");
+      setFile(null);
+      return;
+    }
+    setFile(dropped);
+    setStatus("idle");
+    setErrorMsg("");
+    setFallbackMsg("");
+    setDownloadUrl("");
   };
 
   const getSpacingLabel = (val: number) => ["Subtle", "Medium", "Strong"][val];
@@ -659,11 +696,17 @@ function Home() {
               {/* Dropzone */}
               <div
                 className={`w-full border-2 border-dashed flex flex-col items-center justify-center py-10 md:py-16 px-5 md:px-8 text-center cursor-pointer transition-colors rounded-xl ${
-                  file
-                    ? "border-primary bg-primary/5"
-                    : "border-border/60 hover:border-primary/40 hover:bg-muted/30 bg-background"
+                  isDragging
+                    ? "border-primary bg-primary/10"
+                    : file
+                      ? "border-primary bg-primary/5"
+                      : "border-border/60 hover:border-primary/40 hover:bg-muted/30 bg-background"
                 }`}
                 onClick={() => document.getElementById("epub-upload")?.click()}
+                onDragOver={handleDragOver}
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
                 data-testid="upload-area"
               >
                 <input
