@@ -667,7 +667,7 @@ function Home() {
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">Eye-fixation span</p>
-              <p>The eye resolves only about 9 to 15 characters per fixation (Legge et al., 1997). Chunks sized near that span are read with fewer, shorter fixations and less backtracking (Magloire, 2002).</p>
+              <p>The eye resolves only about 9 to 15 characters per fixation (Legge et al., 1997). Chunks of that size are read with fewer, shorter fixations and less backtracking (Magloire, 2002).</p>
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">Regression &amp; backtracking</p>
