@@ -653,7 +653,7 @@ function Home() {
           <div className="grid md:grid-cols-2 gap-x-12 gap-y-5 text-muted-foreground leading-relaxed">
             <div className="space-y-1">
               <p className="font-medium text-foreground">Chunking</p>
-              <p>Fluent readers don't move word by word; they group words into meaningful phrases and take in each at a glance. PhraseFlow makes those groupings visible.</p>
+              <p>Fluent readers don't move word by word; they group words into meaningful phrases and take in each at a glance. PhraseFlow makes those natural groupings visible in your text, so the eye has less work to do.</p>
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">Syntactically cued formatting</p>
