@@ -673,7 +673,7 @@ function Home() {
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">Regression &amp; backtracking</p>
-              <p>When a phrase boundary is missed, the eye doubles back to re-read. Poor readers regress far more often than skilled ones — up to 43% fewer regressions when text is phrase-cued (Magloire, 2002). Reducing backtracking is one of the clearest measurable gains from chunking.</p>
+              <p>When a phrase boundary is missed, the eye doubles back to re-read. Poor readers regress far more often than skilled ones — up to 43% fewer regressions when text is phrase-cued (Magloire, 2002).</p>
             </div>
           </div>
 
