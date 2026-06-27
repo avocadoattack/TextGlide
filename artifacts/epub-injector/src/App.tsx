@@ -974,9 +974,12 @@ function Home() {
             <div className="space-y-1">
               <p className="font-medium text-foreground">Eye-fixation span</p>
               <p>
-                The eye resolves only about 9 to 15 characters per fixation
-                (Legge et al., 1997). Chunks of that size are read with fewer,
-                shorter fixations and less backtracking (Magloire, 2002).
+                The eye takes in roughly 1–2 words per fixation, spending
+                around 250ms on each. Poor readers make more fixations, hold
+                them longer, and regress more often than skilled readers.
+                Phrase-sized chunks align with this natural fixation rhythm,
+                reducing the work per glance (Lefton, Nagle &amp; Johnson,
+                1979).
               </p>
             </div>
             <div className="space-y-1">
@@ -985,9 +988,12 @@ function Home() {
               </p>
               <p>
                 When a phrase boundary is missed, the eye doubles back to
-                re-read. Poor readers regress far more often than skilled ones,
-                with up to 43% fewer regressions when text is phrase-cued
-                (Magloire, 2002).
+                re-read. Poor readers regress far more often than skilled ones.
+                Phrase-cueing reduces this backtracking: Magloire (2002) found
+                ~31% faster reading in eye-movement-tracked conditions,
+                consistent with fewer costly regressions. Lefton, Nagle &amp;
+                Johnson (1979) independently documented significantly more
+                regressions in poor readers compared to skilled ones.
               </p>
             </div>
           </div>
@@ -1074,21 +1080,18 @@ function Home() {
         >
           <h3 className="font-serif text-2xl text-foreground">References</h3>
           <ul className="flex flex-col gap-y-2 text-sm text-muted-foreground list-disc pl-5">
-            <li>
-              North &amp; Jenkins (1951): ~10.9% faster reading; the
-              foundational syntactically-cued study
-            </li>
-            <li>Graf &amp; Torrey (1966): ~30.9% comprehension gain</li>
-            <li>Mason &amp; Kendall (1979): ~26.3% comprehension gain</li>
-            <li>Jandreau, Muncer &amp; Bever (1986): ~17.9% faster reading</li>
-            <li>Negin (1987): ~14.9% comprehension gain</li>
-            <li>Magloire (2002): ~31% faster reading; eye-movement evidence</li>
-            <li>
-              Walker et al. (2005), Visual-Syntactic Text Formatting: up to ~40%
-              comprehension gain
-            </li>
-            <li>Legge et al. (1997): eye-fixation span</li>
-            <li>Hirotani, Frazier &amp; Rayner (2006): prosodic boundaries</li>
+            <li>North &amp; Jenkins (1951): 13.3%* comprehension gain, 10.9%* speed gain — foundational syntactically-cued study</li>
+            <li>Coleman &amp; Kim (1961): 6.1% comprehension gain — inline spacing; line-break arms significantly slower</li>
+            <li>Graf &amp; Torrey (1966): 30.9%* comprehension gain</li>
+            <li>Mason &amp; Kendall (1978): 26.3%* comprehension gain — low-ability readers; high-ability: no significant effect</li>
+            <li>Lefton, Nagle &amp; Johnson (1979): eye-fixation dynamics — adults ~1.2 words/fixation, ~250ms; poor readers: more, longer fixations, more regressions</li>
+            <li>Keenan (1984): line-break chunking read significantly slower than standard text — line-length variability is the mechanism</li>
+            <li>Jandreau, Muncer &amp; Bever (1986): 17.9%* speed gain — inline phrase gaps; gap width 1.7–2.9× normal</li>
+            <li>Jandreau &amp; Bever (1992): 14.9%* comprehension gain, 8.9%* speed gain — even-spaced control yielded zero benefit; placement is the mechanism, not extra whitespace</li>
+            <li>Bever et al. (1992, Visible Language): crude heuristic beat full grammar parse (p&lt;.025); weak readers +37%, strong readers +6%; gap magnitude had no significant effect</li>
+            <li>Negin (1987): 14.9%* comprehension gain — syntactic segmentation; hearing-impaired second-grade readers</li>
+            <li>Magloire (2002): 31.0%* speed gain — eye-movement-tracked conditions</li>
+            <li>Walker et al. (2005): 40.0%* comprehension gain — Visual-Syntactic Text Formatting</li>
           </ul>
           <p className="text-xs text-muted-foreground/70 leading-relaxed pt-2 border-t border-border/30">
             These effect sizes span decades and methods, and several come from
