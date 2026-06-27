@@ -360,10 +360,13 @@ function Home() {
         .gaps-open .gap-span {
           width: 0.22em;
         }
-        .after-text-mobile { display: none; }
+        .after-text-mobile  { display: none; }
+        .before-text-mobile { display: none; }
         @media (max-width: 640px) {
-          .after-text-desktop { display: none; }
-          .after-text-mobile  { display: block; }
+          .after-text-desktop  { display: none; }
+          .after-text-mobile   { display: block; }
+          .before-text-desktop { display: none; }
+          .before-text-mobile  { display: block; }
         }
       `}</style>
       {/* ── 1. Hero — full viewport ─────────────────────────────────────── */}
@@ -398,9 +401,12 @@ function Home() {
               <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3 md:mb-5">
                 Before
               </div>
-              <p className="font-serif text-base md:text-xl leading-[2] text-foreground">
+              <p className="before-text-desktop font-serif text-base md:text-xl leading-[2] text-foreground">
                 She wrote every morning by the window, while the city came
                 slowly awake outside and the light changed.
+              </p>
+              <p className="before-text-mobile font-serif text-base leading-[2] text-foreground">
+                She wrote every morning by the window.
               </p>
             </div>
             <div className="p-5 md:p-8 rounded-xl bg-primary/5 border border-primary/20 shadow-sm relative overflow-hidden">
@@ -412,7 +418,7 @@ function Home() {
                 She wrote every morning<span className="gap-span" aria-hidden="true" /> by the window,<span className="gap-span" aria-hidden="true" /> while the city came slowly awake outside<span className="gap-span" aria-hidden="true" /> and the light changed.
               </p>
               <p className={`after-text-mobile font-serif text-base leading-[2] text-foreground${gapsOpen ? " gaps-open" : ""}`}>
-                She wrote every morning<span className="gap-span" aria-hidden="true" /> by the window,<span className="gap-span" aria-hidden="true" /> eyes on the street.
+                She wrote every morning<span className="gap-span" aria-hidden="true" /> by the window.
               </p>
             </div>
           </div>
