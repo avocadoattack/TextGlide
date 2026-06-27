@@ -360,26 +360,10 @@ function Home() {
         .gaps-open .gap-span {
           width: 0.22em;
         }
+        .after-text-mobile { display: none; }
         @media (max-width: 640px) {
-          .gap-span {
-            border-left: 2px solid rgba(180, 140, 80, 0.45);
-            margin-left: 2px;
-          }
-        }
-
-        @keyframes cursorSweep {
-          from { transform: translateX(-100%); }
-          to   { transform: translateX(200%); }
-        }
-        .cursor-sweep {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 3px;
-          height: 100%;
-          background: rgba(180, 140, 80, 0.35);
-          pointer-events: none;
-          animation: cursorSweep 1700ms ease-in-out 1700ms forwards;
+          .after-text-desktop { display: none; }
+          .after-text-mobile  { display: block; }
         }
       `}</style>
       {/* ── 1. Hero — full viewport ─────────────────────────────────────── */}
@@ -424,9 +408,11 @@ function Home() {
               <div className="text-xs uppercase tracking-wider text-primary font-semibold mb-3 md:mb-5">
                 After
               </div>
-              <p className={`font-serif text-base md:text-xl leading-[2] text-foreground relative overflow-hidden${gapsOpen ? " gaps-open" : ""}`}>
-                <span className="cursor-sweep" aria-hidden="true" />
+              <p className={`after-text-desktop font-serif text-base md:text-xl leading-[2] text-foreground${gapsOpen ? " gaps-open" : ""}`}>
                 She wrote every morning<span className="gap-span" aria-hidden="true" /> by the window,<span className="gap-span" aria-hidden="true" /> while the city came slowly awake outside<span className="gap-span" aria-hidden="true" /> and the light changed.
+              </p>
+              <p className={`after-text-mobile font-serif text-base leading-[2] text-foreground${gapsOpen ? " gaps-open" : ""}`}>
+                She wrote every morning<span className="gap-span" aria-hidden="true" /> by the window,<span className="gap-span" aria-hidden="true" /> eyes on the street.
               </p>
             </div>
           </div>
