@@ -866,11 +866,7 @@ function Home() {
                   Pick a mode and adjust the sliders
                 </strong>
               </div>
-              <p className="text-muted-foreground leading-relaxed text-sm">
-                Try the live preview to find your preferred rhythm. Natural
-                Scan mode relies on fast pattern detection, while Grammar Parse
-                mode employs full grammar analysis.
-              </p>
+              <p className="text-muted-foreground leading-relaxed text-sm">Try the live preview to find your preferred mode. Natural Scan relies on fast pattern detection, while Grammar Parse employs full grammar analysis.</p>
             </div>
             <div className="bg-muted/30 border border-border/40 rounded-xl p-6 space-y-3">
               <div className="flex items-center gap-3">
@@ -966,13 +962,7 @@ function Home() {
               </div>
               <div className="bg-muted/30 border border-border/40 rounded-xl p-5 space-y-2">
                 <p className="font-medium text-foreground">Grammar Parse</p>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  A complete grammatical analysis of each sentence before
-                  placing breaks. Technically, it's more linguistically
-                  precise, but evidence shows that full-phrase-structure
-                  parsing was less effective than a heuristic-based phrase
-                  segmenter. Kept as a comparison option.
-                </p>
+                <p className="text-muted-foreground text-sm leading-relaxed">A complete grammatical analysis of each sentence before inserting gaps. Technically, it's more linguistically precise, but evidence shows that full-phrase-structure parsing was less effective than a heuristic-based phrase segmenter. Kept as a comparison option for research and testing purposes.</p>
               </div>
             </div>
             <p className="text-muted-foreground text-sm leading-relaxed text-center">
