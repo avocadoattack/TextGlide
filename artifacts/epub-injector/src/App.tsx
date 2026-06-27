@@ -368,8 +368,16 @@ function Home() {
               <p className="font-serif text-base md:text-xl leading-[2] text-foreground">
                 {heroAfterText.split("\u2009").map((chunk, i, arr) => (
                   <span key={i}>
-                    <span style={{ whiteSpace: "nowrap" }}>{chunk}</span>
-                    {i < arr.length - 1 && "\u2009"}
+                    <span
+                      style={{
+                        backgroundColor: "#FDF3C8",
+                        paddingLeft: "3px",
+                        paddingRight: "3px",
+                      }}
+                    >
+                      {chunk}
+                    </span>
+                    {i < arr.length - 1 && " "}
                   </span>
                 ))}
               </p>
