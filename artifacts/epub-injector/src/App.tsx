@@ -996,9 +996,7 @@ function Home() {
               </div>
             </div>
             <p className="text-muted-foreground text-sm leading-relaxed text-center">
-              <strong className="text-foreground">Why both?</strong> They trade
-              coverage against precision differently. But we expect to settle on
-              one single coherent mode soon.
+              <strong className="text-foreground">Why both?</strong> They trade coverage against precision differently. We expect to settle on one single mode soon.
             </p>
           </div>
         </section>
@@ -1013,7 +1011,7 @@ function Home() {
             {[
               {
                 q: "Will TextGlide work with my e-reader?",
-                a: "TextGlide outputs a standard EPUB file. Any e-reader that accepts EPUBs will work, including Kindle, Kobo, Apple Books, and most reading apps. The spacing is inline, so it survives font-size changes and reflow without breaking.",
+                a: "TextGlide creates a standard EPUB file. Any e-reader that supports EPUBs should work, like Kindle, Kobo, Apple Books, and most reading apps. The spacing is built in (inline), so it stays even if you change the font size or layout.",
               },
               {
                 q: "Does this actually work?",
@@ -1021,27 +1019,27 @@ function Home() {
               },
               {
                 q: "Does TextGlide remove DRM?",
-                a: "No, and it can't. TextGlide refuses to process any EPUB with DRM and will tell you so clearly. It only works on DRM-free files: books you authored, public-domain texts, or files you've already legally stripped through your own means.",
+                a: "No, it can’t. TextGlide won’t process any EPUB with DRM and will let you know if that’s the case. It only works on DRM-free files, like books you wrote, public-domain texts, or files you’ve legally made DRM-free yourself.",
               },
               {
                 q: "How do I choose between Natural Scan and Grammar Parse?",
-                a: "Natural Scan reads word-pattern cues to guess phrase boundaries, similar to the rough first pass your brain makes before fully parsing a sentence. Grammar Parse runs a complete grammatical analysis before placing breaks. Head-to-head research found that the faster statistical method significantly outperformed the precise grammar parse for readability (Bever et al. 1992), which is why Natural Scan is the default. Try Grammar Parse if you want to compare, but the evidence favors Natural Scan.",
+                a: "Natural Scan reads word-pattern cues to guess phrase boundaries, similar to the rough first pass your brain makes before fully parsing a sentence. Grammar Parse runs a complete grammatical analysis before placing breaks. Head-to-head research found that the faster statistical method significantly outperformed the precise grammar parse in terms of readability (Bever et al. 1992), which is why Natural Scan is the default. Try Grammar Parse if you want to compare, but the evidence favors Natural Scan.",
               },
               {
                 q: "Can I adjust the Reading Support level?",
-                a: "Yes. The Reading Support control lets you choose between Balanced and Strong. Balanced breaks at major phrase boundaries, keeping groups around 3 to 5 words, which is ideal for everyday reading. Strong adds finer breaks, which research shows especially help developing and non-native readers, as well as anyone tackling dense material. The live preview updates immediately, so you can see the difference before processing any file.",
+                a: "Yes. The Reading Support setting lets you pick Balanced or Strong. Balanced breaks at main phrase points, grouping about 3 to 5 words, which works well for most reading. Strong adds more breaks, which research shows help developing and non-native readers, as well as anyone reading tough material. The live preview updates right away, so you can see the difference before you process your file.",
               },
               {
-                q: "Why set my Kindle to left-aligned?",
-                a: "Kindle's default justified layout stretches the normal word spacing to fill each line. This stretching is unpredictable, varying line by line, and can erase the contrast between ordinary word spaces and the phrase gaps TextGlide inserts. All supporting research was conducted on left-aligned (ragged-right) text, where word spacing remains fixed and phrase gaps stand out clearly. TextGlide injects a left-alignment rule into the processed file as a best effort, but your device's own setting can override it. It's worth setting it manually as well.",
+                q: "Why set my e-Reader to left-aligned?",
+                a: "A justified text layout stretches word spacing to fill each line. This stretching is unpredictable and can erase the calibrated phrase gaps that TextGlide adds. All supporting research on which TextGlide is based used left-aligned (ragged-right) text, where word spacing remains fixed, and phrase gaps are easy to see. TextGlide processing sets a left alignment rule in your file as a best effort, but your device's settings might override it. It's a good idea to set it manually, too.",
               },
               {
                 q: "What if I don't like the result?",
-                a: "Your original file is never modified. TextGlide processes a copy and provides you with the new file for download, so you can always go back to the original, tweak the settings, and reprocess as many times as you like.",
+                a: "Your original file is never changed. TextGlide makes a copy and gives you the new file to download. You can always return to your original, adjust the settings, and process it again as many times as you want.",
               },
               {
                 q: "Does TextGlide store my books or personal data?",
-                a: "No. Uploaded files are processed in a temporary directory and deleted immediately after your download is ready. TextGlide does not log IP addresses, store EPUBs, or collect any personal data. Nothing you upload is ever retained or transmitted anywhere.",
+                a: "No. Uploaded files are handled in a temporary folder and deleted right after your download is ready. TextGlide does not log IP addresses, store EPUBs, or collect any personal data. Nothing you upload is ever kept or sent anywhere.",
               },
             ].map(({ q, a }) => (
               <div key={q} className="py-5">
@@ -1077,10 +1075,7 @@ function Home() {
             <li>Walker et al. (2005): 40.0%* comprehension gain — Visual-Syntactic Text Formatting</li>
           </ul>
           <p className="text-xs text-muted-foreground/70 leading-relaxed pt-2 border-t border-border/30">
-            These effect sizes span decades and methods, and several come from
-            small studies. The direction is consistent: cueing phrases helps,
-            but treat the magnitudes as a range, and expect individual
-            variation.
+            These results come from studies over many years and use different methods, with some based on small groups. The trend is clear: cueing phrases make reading feel easier, but the effect size varies, and results can differ from person to person.
           </p>
         </section>
 
