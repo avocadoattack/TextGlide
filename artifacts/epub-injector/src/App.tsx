@@ -366,20 +366,22 @@ function Home() {
                 After
               </div>
               <p className="font-serif text-base md:text-xl leading-[2] text-foreground">
-                {heroAfterText.split("\u2009").map((chunk, i, arr) => (
-                  <span key={i}>
+                {heroAfterText
+                  .split("\u2009")
+                  .filter((c) => c.trim().length > 0)
+                  .map((chunk, i, arr) => (
                     <span
+                      key={i}
                       style={{
                         backgroundColor: "#FDF3C8",
                         paddingLeft: "3px",
                         paddingRight: "3px",
+                        marginRight: i < arr.length - 1 ? "0.3em" : 0,
                       }}
                     >
                       {chunk}
                     </span>
-                    {i < arr.length - 1 && " "}
-                  </span>
-                ))}
+                  ))}
               </p>
             </div>
           </div>
