@@ -121,6 +121,223 @@ function SweepPhrase({
   );
 }
 
+const NAV_ITEMS = [
+  { id: "section-home",    label: "Home",    tooltip: "Home" },
+  { id: "section-try",     label: "Try",     tooltip: "Try it live" },
+  { id: "section-process", label: "Process", tooltip: "Process your EPUB" },
+  { id: "section-usage",   label: "Usage",   tooltip: "How to use" },
+  { id: "section-science", label: "Science", tooltip: "How it works & the science" },
+  { id: "section-faq",     label: "FAQ",     tooltip: "Frequently asked questions" },
+  { id: "section-refs",    label: "Refs",    tooltip: "References" },
+  { id: "section-origin",  label: "Origin",  tooltip: "Why it exists" },
+] as const;
+
+function NavRail() {
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    const intersecting = new Set<string>();
+    const observers: IntersectionObserver[] = [];
+    NAV_ITEMS.forEach(({ id }) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) intersecting.add(id);
+          else intersecting.delete(id);
+          const first = NAV_ITEMS.find((item) => intersecting.has(item.id));
+          setActiveId(first?.id ?? null);
+        },
+        { threshold: 0.15 },
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+    return () => observers.forEach((o) => o.disconnect());
+  }, []);
+
+  const scrollTo = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+    setMobileOpen(false);
+  };
+
+  return (
+    <>
+      <nav
+        aria-label="Page sections"
+        className="nav-rail-desktop"
+        style={{
+          position: "fixed",
+          left: 24,
+          top: "50%",
+          transform: "translateY(-50%)",
+          zIndex: 1000,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          padding: "12px 0",
+          width: 44,
+          backgroundColor: "#FFFFFF",
+          borderRadius: 24,
+          boxShadow: "0 2px 16px rgba(60,40,20,0.10), 0 1px 4px rgba(60,40,20,0.06)",
+        }}
+      >
+        {NAV_ITEMS.map(({ id, label, tooltip }) => {
+          const isActive = activeId === id;
+          const isHovered = hoveredId === id;
+          return (
+            <div
+              key={id}
+              style={{ position: "relative", display: "flex", alignItems: "center", margin: "7px 0" }}
+              onMouseEnter={() => setHoveredId(id)}
+              onMouseLeave={() => setHoveredId(null)}
+            >
+              <button
+                onClick={() => scrollTo(id)}
+                aria-label={label}
+                style={{
+                  width: isActive ? 10 : isHovered ? 9 : 7,
+                  height: isActive ? 10 : isHovered ? 9 : 7,
+                  borderRadius: "50%",
+                  background: isActive || isHovered ? "#C0533A" : "#7A6349",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                  transition: "all 150ms ease",
+                  display: "block",
+                }}
+              />
+              {isHovered && (
+                <div
+                  style={{
+                    position: "absolute",
+                    left: "calc(100% + 10px)",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    backgroundColor: "#2a2016",
+                    color: "#FFFFFF",
+                    fontSize: 12,
+                    lineHeight: "1.4",
+                    padding: "4px 10px",
+                    borderRadius: 20,
+                    whiteSpace: "nowrap",
+                    pointerEvents: "none",
+                    animation: "navTooltipFade 150ms ease forwards",
+                    fontFamily: "inherit",
+                  }}
+                >
+                  {tooltip}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </nav>
+
+      <button
+        className="nav-rail-mobile"
+        onClick={() => setMobileOpen(true)}
+        aria-label="Open navigation menu"
+        style={{
+          position: "fixed",
+          top: 16,
+          left: 16,
+          zIndex: 1000,
+          width: 40,
+          height: 40,
+          borderRadius: "50%",
+          backgroundColor: "#FFFFFF",
+          boxShadow: "0 2px 10px rgba(60,40,20,0.12)",
+          border: "none",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden="true">
+          <rect x="0" y="0"  width="18" height="2" rx="1" fill="#3D2F1F" />
+          <rect x="0" y="6"  width="18" height="2" rx="1" fill="#3D2F1F" />
+          <rect x="0" y="12" width="18" height="2" rx="1" fill="#3D2F1F" />
+        </svg>
+      </button>
+
+      {mobileOpen && (
+        <>
+          <div
+            aria-hidden="true"
+            onClick={() => setMobileOpen(false)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              backgroundColor: "rgba(0,0,0,0.45)",
+              zIndex: 1001,
+              animation: "navOverlayFade 200ms ease forwards",
+            }}
+          />
+          <nav
+            aria-label="Page sections"
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              bottom: 0,
+              width: 220,
+              backgroundColor: "#FFFFFF",
+              zIndex: 1002,
+              padding: "20px 0 24px",
+              boxShadow: "4px 0 24px rgba(60,40,20,0.14)",
+              display: "flex",
+              flexDirection: "column",
+              animation: "navSlideIn 220ms ease forwards",
+            }}
+          >
+            <button
+              onClick={() => setMobileOpen(false)}
+              aria-label="Close navigation menu"
+              style={{
+                alignSelf: "flex-end",
+                marginRight: 16,
+                marginBottom: 16,
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: 18,
+                color: "#3D2F1F",
+                lineHeight: 1,
+                padding: 4,
+              }}
+            >
+              ✕
+            </button>
+            {NAV_ITEMS.map(({ id, label }) => (
+              <button
+                key={id}
+                onClick={() => scrollTo(id)}
+                style={{
+                  textAlign: "left",
+                  padding: "12px 24px",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontSize: 16,
+                  color: "#3D2F1F",
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+        </>
+      )}
+    </>
+  );
+}
+
 function Home() {
   const heroRef = useRef<HTMLElement>(null);
   const [heroVisible, setHeroVisible] = useState(true);
@@ -321,6 +538,7 @@ function Home() {
       className="min-h-screen pb-20 selection:bg-primary/20"
       data-testid="page-home"
     >
+      <NavRail />
       {/* keyframes */}
       <style>{`
         @keyframes gentleBounce {
@@ -380,6 +598,25 @@ function Home() {
           line-height: 0;
           animation: cursorPulse 1500ms ease-out forwards;
         }
+        html { scroll-behavior: smooth; }
+        @keyframes navTooltipFade {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes navOverlayFade {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes navSlideIn {
+          from { transform: translateX(-100%); }
+          to   { transform: translateX(0); }
+        }
+        @media (min-width: 768px) {
+          .nav-rail-mobile { display: none !important; }
+        }
+        @media (max-width: 767px) {
+          .nav-rail-desktop { display: none !important; }
+        }
         .after-text-mobile  { display: none; }
         .before-text-mobile { display: none; }
         @media (max-width: 640px) {
@@ -405,6 +642,7 @@ function Home() {
       {/* ── 1. Hero — full viewport ─────────────────────────────────────── */}
       <section
         ref={heroRef}
+        id="section-home"
         className="relative min-h-screen md:h-screen flex flex-col items-center justify-center text-center overflow-hidden px-6 py-16 md:py-0"
         data-testid="section-hero"
       >
@@ -476,7 +714,7 @@ function Home() {
         data-testid="main-content"
       >
         {/* 2. Live Preview */}
-        <section data-testid="section-preview">
+        <section id="section-try" data-testid="section-preview">
           <Card
             className="border-border/60 shadow-md bg-card/50 backdrop-blur-sm overflow-hidden"
             data-testid="card-preview"
@@ -774,7 +1012,7 @@ function Home() {
         </section>
 
         {/* 3. Upload & Process */}
-        <section data-testid="section-process">
+        <section id="section-process" data-testid="section-process">
           <div className="space-y-6">
             <h2
               className="font-serif text-3xl font-medium text-foreground"
@@ -968,6 +1206,7 @@ function Home() {
         {/* 4. How to use */}
         <section
           className="pt-8 border-t border-border/50 space-y-6"
+          id="section-usage"
           data-testid="section-how-to"
         >
           <h3 className="font-serif text-2xl text-foreground">How to use</h3>
@@ -1015,6 +1254,7 @@ function Home() {
         {/* 5. How it works and the science */}
         <section
           className="pt-8 border-t border-border/50 space-y-6"
+          id="section-science"
           data-testid="section-science"
         >
           <h3 className="font-serif text-2xl text-foreground">
@@ -1089,6 +1329,7 @@ function Home() {
         {/* FAQ */}
         <section
           className="pt-8 border-t border-border/50 space-y-6"
+          id="section-faq"
           data-testid="section-faq"
         >
           <h3 className="font-serif text-2xl text-foreground">Frequently Asked Questions</h3>
@@ -1142,6 +1383,7 @@ function Home() {
         {/* References */}
         <section
           className="pt-8 border-t border-border/50 space-y-6"
+          id="section-refs"
           data-testid="section-references"
         >
           <h3 className="font-serif text-2xl text-foreground">References</h3>
@@ -1167,6 +1409,7 @@ function Home() {
         {/* 6. Why it exists */}
         <section
           className="bg-muted/30 p-8 md:p-12 rounded-2xl border border-border/50 text-center space-y-6"
+          id="section-origin"
           data-testid="section-why"
         >
           <h3 className="font-serif text-2xl text-foreground">Why it exists</h3>
