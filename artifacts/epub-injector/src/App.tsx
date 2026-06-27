@@ -353,6 +353,7 @@ function Home() {
 
         .gap-span {
           display: inline-block;
+          position: relative;
           width: 0;
           overflow: hidden;
           transition: width 1700ms ease-out;
@@ -370,11 +371,15 @@ function Home() {
         }
         .gaps-open .gap-span::after {
           content: '';
-          display: inline-block;
+          display: block;
+          position: absolute;
+          top: 50%;
+          left: 0;
+          transform: translateY(-50%);
           width: 2px;
           height: 0.85em;
+          line-height: 0;
           background: rgba(180, 140, 80, 0.65);
-          vertical-align: text-bottom;
           margin-left: 1px;
           border-radius: 1px;
           animation: cursorPulse 1500ms ease-out forwards;
