@@ -367,6 +367,19 @@ function Home() {
           .after-text-mobile   { display: block; }
           .before-text-desktop { display: none; }
           .before-text-mobile  { display: block; }
+
+          [data-testid="hero-subhead"] {
+            margin-top: 2.5rem !important;
+          }
+          [data-testid="hero-comparison"] {
+            margin-top: 3rem !important;
+            gap: 1.5rem;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+          }
+          [data-testid="hero-comparison"] > div {
+            padding: 1.75rem;
+          }
         }
       `}</style>
       {/* ── 1. Hero — full viewport ─────────────────────────────────────── */}
