@@ -939,27 +939,17 @@ function Home() {
           <div className="grid md:grid-cols-2 gap-x-12 gap-y-5 text-muted-foreground leading-relaxed">
             <div className="space-y-1">
               <p className="font-medium text-foreground">Chunking</p>
-              <p>Fluent readers don't move word by word; they group words into meaningful phrases and take in each at a glance. TextGlide makes those natural groupings visible in your text, so the eye has less work to do.</p>
+              <p>Fluent readers don’t read word by word. They group words into phrases and take in each group at a glance. TextGlide subtly surfaces these natural word groupings in your text, so your eyes work less.</p>
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">
                 Syntactically cued formatting
               </p>
-              <p>
-                Making phrase boundaries visible with spacing. North & Jenkins
-                first measured the effect in 1951: readers were faster and
-                comprehended more when phrase structure was cued. Many studies
-                have since confirmed it.
-              </p>
+              <p>Adding spacing to show phrase breaks helps readers. North & Jenkins first studied this in 1951 and found that readers were faster and understood more when phrase structure was marked (read: cued). Many later studies have confirmed these results.</p>
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">Pseudosyntax</p>
-              <p>
-                Before you consciously parse a sentence, your brain makes a
-                fast, rough guess at its structure from statistical cues, then
-                refines it. Subtle spacing supports that first-pass guess
-                instead of fighting it.
-              </p>
+              <p>Before you consciously parse a sentence, your brain makes a fast, rough guess at its structure from statistical cues. Subtle spacing supports that first-pass guess, making the text easier to read.</p>
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">
