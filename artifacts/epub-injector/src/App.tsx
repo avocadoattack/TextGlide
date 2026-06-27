@@ -855,11 +855,7 @@ function Home() {
                   Upload a DRM-free EPUB
                 </strong>
               </div>
-              <p className="text-muted-foreground leading-relaxed text-sm">
-                If your book has DRM, you'll need to remove it first. PhraseFlow
-                only works with DRM-free files and is currently compatible only
-                with EPUBs.
-              </p>
+              <p className="text-muted-foreground leading-relaxed text-sm">If your book has DRM, you'll need to remove it first. TextGlide only works with DRM-free files and is currently compatible only with EPUBs.</p>
             </div>
             <div className="bg-muted/30 border border-border/40 rounded-xl p-6 space-y-3">
               <div className="flex items-center gap-3">
@@ -871,9 +867,9 @@ function Home() {
                 </strong>
               </div>
               <p className="text-muted-foreground leading-relaxed text-sm">
-                Use the live preview to find the rhythm that suits you.
-                Syntactic mode uses full grammar analysis; Pseudosyntactic uses
-                fast pattern detection.
+                Try the live preview to find your preferred rhythm. Natural
+                Scan mode relies on fast pattern detection, while Grammar Parse
+                mode employs full grammar analysis.
               </p>
             </div>
             <div className="bg-muted/30 border border-border/40 rounded-xl p-6 space-y-3">
@@ -886,8 +882,9 @@ function Home() {
                 </strong>
               </div>
               <p className="text-muted-foreground leading-relaxed text-sm">
-                Transfer via USB cable or use Send to Kindle. Your original file
-                is untouched; you can always reprocess with different settings.
+                Transfer via USB cable or use the Send to Kindle app. Your
+                original file is untouched; you can always reprocess with
+                different settings.
               </p>
             </div>
           </div>
@@ -905,12 +902,7 @@ function Home() {
           <div className="grid md:grid-cols-2 gap-x-12 gap-y-5 text-muted-foreground leading-relaxed">
             <div className="space-y-1">
               <p className="font-medium text-foreground">Chunking</p>
-              <p>
-                Fluent readers don't move word by word; they group words into
-                meaningful phrases and take in each at a glance. PhraseFlow
-                makes those natural groupings visible in your text, so the eye
-                has less work to do.
-              </p>
+              <p>Fluent readers don't move word by word; they group words into meaningful phrases and take in each at a glance. TextGlide makes those natural groupings visible in your text, so the eye has less work to do.</p>
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">
@@ -970,20 +962,16 @@ function Home() {
             <div className="grid md:grid-cols-2 gap-6">
               <div className="bg-muted/30 border border-border/40 rounded-xl p-5 space-y-2">
                 <p className="font-medium text-foreground">Natural Scan</p>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  A fast, statistical read of where phrases begin, from
-                  word-pattern cues rather than full grammar. Mirrors the quick
-                  first-pass your eyes already make. In head-to-head research
-                  this rough method actually beat full grammar parsing for
-                  readability — which is why it's the default.
-                </p>
+                <p className="text-muted-foreground text-sm leading-relaxed">A fast, statistical read of where phrases begin, from word-pattern cues rather than full grammar. Mirrors the intuitive first pass your eyes already make. In head-to-head research, this rough, heuristic method actually beat full-grammar parsing and even a prosodic parse for readability, which is why it's the default.</p>
               </div>
               <div className="bg-muted/30 border border-border/40 rounded-xl p-5 space-y-2">
                 <p className="font-medium text-foreground">Grammar Parse</p>
                 <p className="text-muted-foreground text-sm leading-relaxed">
                   A complete grammatical analysis of each sentence before
-                  placing breaks. More linguistically precise, but precision
-                  isn't what helps reading here. Kept as a comparison option.
+                  placing breaks. Technically, it's more linguistically
+                  precise, but evidence shows that full-phrase-structure
+                  parsing was less effective than a heuristic-based phrase
+                  segmenter. Kept as a comparison option.
                 </p>
               </div>
             </div>
@@ -1085,13 +1073,7 @@ function Home() {
           data-testid="section-why"
         >
           <h3 className="font-serif text-2xl text-foreground">Why it exists</h3>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Fluent readers don't read one word at a time; they take in
-            meaningful phrases per glance. PhraseFlow swiftly rebuilds your
-            EPUBs to gently cue those phrase groups with carefully calibrated
-            extra spacing: a free, open-source tool that works on any e-reader
-            that accepts EPUBs.
-          </p>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">Fluent readers don't read one word at a time; they take in meaningful phrases per glance. TextGlide swiftly rebuilds your EPUBs to gently cue those phrase groups with carefully calibrated extra spacing: a free, open-source tool that works on any e-reader that accepts EPUBs.</p>
         </section>
       </main>
       {/* Footer */}
@@ -1110,7 +1092,7 @@ function Home() {
           . Contributions and evidence welcome.
         </p>
         <p className="text-xs text-muted-foreground/70">
-          PhraseFlow — a reading aid, not a medical device.
+          TextGlide — a reading aid, not a medical device.
         </p>
       </footer>
     </div>
