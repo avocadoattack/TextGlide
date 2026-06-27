@@ -366,22 +366,13 @@ function Home() {
                 After
               </div>
               <p className="font-serif text-base md:text-xl leading-[2] text-foreground">
-                {heroAfterText
-                  .split("\u2009")
-                  .filter((c) => c.trim().length > 0)
-                  .map((chunk, i, arr) => (
-                    <span
-                      key={i}
-                      style={{
-                        backgroundColor: "#FDF3C8",
-                        paddingLeft: "3px",
-                        paddingRight: "3px",
-                        marginRight: i < arr.length - 1 ? "0.3em" : 0,
-                      }}
-                    >
-                      {chunk}
-                    </span>
-                  ))}
+                <span style={{backgroundColor:'#FDF3C8',borderRadius:'2px',padding:'0 3px'}}>She wrote every morning</span>
+                {' '}
+                <span style={{backgroundColor:'#FDF3C8',borderRadius:'2px',padding:'0 3px'}}>by the window,</span>
+                {' '}
+                <span style={{backgroundColor:'#FDF3C8',borderRadius:'2px',padding:'0 3px'}}>while the city came slowly awake outside</span>
+                {' '}
+                <span style={{backgroundColor:'#FDF3C8',borderRadius:'2px',padding:'0 3px'}}>and the light changed.</span>
               </p>
             </div>
           </div>
