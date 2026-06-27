@@ -2,130 +2,183 @@
 
 **Read in phrases, not word by word.**
 
-PhraseFlow adds subtle spacing at the natural phrase boundaries in your EPUBs, so your eyes group words the way fluent readers already do. Then it hands you a file ready for Kindle.
+PhraseFlow is a free, open-source web app that inserts empirically-calibrated spacing at phrase boundaries inside EPUB files, then hands back a Kindle-ready EPUB. The goal is to make the natural groupings of language visible on the page — the way fluent readers' eyes already move, just without the visual cue.
+
+**Live app:** [phraseflow.replit.app](https://replit.com/@accounts571/EPUB-Phrase-Enhancer)
 
 ---
 
 ## What it does
 
-PhraseFlow unpacks a DRM-free EPUB, walks every XHTML content document, and inserts thin Unicode space characters at major phrase boundaries. It repacks a valid EPUB — preserving all metadata, markup, cover, and structure — that you can send directly to Kindle.
+Fluent readers don't process text word by word. They take in meaningful phrases per glance — the eye lands, the brain encodes the chunk, the eye moves on. For skilled readers this is automatic; for developing, non-native, or fatigued readers it often isn't, and it's the source of the gap in reading speed and comprehension.
 
-Only text nodes are ever modified. Tags, attributes, scripts, styles, and intra-word characters are never touched. If any content document fails to process, it is left untouched rather than corrupting the file.
-
----
-
-## The science
-
-PhraseFlow is grounded in decades of reading research on chunking and phrase-based reading.
-
-Visual-Syntactic Text Formatting studies (Walker et al., 2005; Park & Warschauer, 2016) show that segmenting text at clause and phrase boundaries — sized to the eye's natural fixation span of roughly 8 to 30 characters — can improve comprehension and reduce eyestrain. The eye takes in only about 9 to 15 characters per fixation (Legge et al., 1997), and breaks that mirror natural speech prosody aid processing (Hirotani, Frazier & Rayner, 2006).
-
-The evidence is promising but not universal, and what helps varies from reader to reader, which is why the spacing is adjustable. **This is a reading aid, not a medical device.**
-
-### Citations
-
-- Walker, B., Schloss, P., Fletcher, C. R., Vogel, C. A., & Walker, R. C. (2005). Visual-syntactic text formatting: A new method to enhance online reading. *Reading Online*, 8(6).
-- Park, Y., & Warschauer, M. (2016). Syntactic enhancement and language learning. *Language Learning & Technology*, 20(3), 116–134.
-- Legge, G. E., Ahn, S. J., Klitz, T. S., & Luebker, A. (1997). Psychophysics of reading: XVI. The visual span in normal and low vision. *Vision Research*, 37(14), 1999–2010.
-- Hirotani, M., Frazier, L., & Rayner, K. (2006). Punctuation and intonation effects on clause and sentence wrap-up: Evidence from eye movements. *Journal of Memory and Language*, 54(3), 425–443.
+PhraseFlow takes a DRM-free EPUB, parses every sentence, and inserts a fixed-width thin space (U+2009) at phrase boundaries — **inline**, not as a line-break cascade. The result is a file that reads identically on every e-reader and survives font-size changes and Kindle reflow, because it only edits whitespace. Words, markup, and layout are untouched.
 
 ---
 
-## Algorithm
+## The evidence
 
-### Simple mode
+PhraseFlow's algorithm is calibrated directly against the peer-reviewed literature. Ten papers were read in full; the core finding, replicated across roughly two dozen English-language studies (Bever et al. 1992):
 
-Inserts gaps:
-- Before a configurable list of structure words that signal clause/phrase boundaries (English: *and, or, but, so, yet, that, which, when, where, to, of, in, on, for, with, by, from, as…*; Spanish equivalent list for es mode).
-- After sentence-terminal punctuation (`.`, `!`, `?`).
-- Respects the **Chunk density** slider: at Subtle density, a minimum character count is enforced so gaps are not placed too close together.
+- **+12.7% comprehension** (subject-weighted mean across significant studies)
+- **+9.9% reading speed** (subject-weighted mean across significant studies)
 
-### Smart mode
+Roughly half the studies in the full corpus found no significant effect. The gain is real but modest. Individual variation is high. The benefit concentrates in **developing, average, and non-native readers**, and in **harder or less-familiar material**:
 
-Uses a three-tier system with automatic fallback:
+| Reader group | Improvement |
+|---|---|
+| Weak / developing readers | ~+37% (Bever et al. 1992) |
+| Average readers | Significant (Jandreau & Bever 1992) |
+| Strong / fluent readers | ~+6%, not statistically significant |
 
-**Tier 1 — Constituency parse (benepar)**
-Adds the [Berkeley Neural Parser](https://github.com/nikitakit/self-attentive-parser) as a spaCy pipeline component. Uses true constituency parse trees to break at:
-- Major constituent boundaries (between subject NP and predicate VP, before subordinate clauses SBAR, before coordinating conjunctions at clause level).
-- Prepositional phrases at clause level (at Medium and Obvious density).
-- Noun phrases (at Obvious density only).
+**The key mechanistic finding:** the gain comes from *where* the gap lands, not from extra whitespace. Jandreau & Bever (1992) tested a matched control with the same total whitespace spread evenly — it produced zero benefit. This is why PhraseFlow fixes the gap at one calibrated width rather than exposing it as a slider.
 
-Enforces **glued-unit rules** — never breaks:
-- Determiner + noun (det → head)
-- Infinitival "to" + verb
-- Auxiliary + main verb
-- Negation + following token
-- Preposition + immediately following object
+**Gap width:** U+2009 thin space, ~1.8× a normal word space (additive, confirmed by XHTML inspection and visual verification on Kindle Paperwhite 12 / Amazon Ember). This sits at the evidence-calibrated center: Bever et al. (1992) tested two gap magnitudes (1.75× and 2.5×) and found no significant difference between them.
 
-Applies **size guardrails** from VSTF research (Walker et al., 2005):
-| Density | Min chars per chunk |
-|---------|---------------------|
-| Subtle  | 22 chars            |
-| Medium  | 12 chars            |
-| Obvious |  7 chars            |
+### Source papers
 
-**Tier 2 — Dependency parse (spaCy, fallback)**
-If benepar is unavailable, uses spaCy dependency labels to identify major boundaries: ROOT, ccomp, xcomp, advcl, relcl, conj, parataxis, and clause-level prepositional phrases. Same min-chars guardrail applies.
-
-**Tier 3 — Simple mode (final fallback)**
-If the spaCy model cannot be loaded, falls back to Simple mode. The user is told which mode actually ran via the `X-Fallback-Warning` response header and the mode badge in the live preview.
-
-### Languages
-
-| Language | spaCy model | benepar model |
-|----------|-------------|---------------|
-| English  | en_core_web_sm | benepar_en3 |
-| Spanish  | es_core_news_sm | benepar_es3 (if available) |
-
-Auto-detect uses a lightweight character/word-frequency heuristic.
-
-### Gap characters
-
-| Spacing Width | Unicode | Name |
-|---------------|---------|------|
-| Subtle | U+2009 | THIN SPACE (~1/5 em) |
-| Medium | U+2002 | EN SPACE (~1/2 em) |
-| Strong | U+2003 | EM SPACE (1 em) |
-
-**Default is Subtle** — less is more.
+| Paper | Key finding |
+|---|---|
+| North & Jenkins (1951) | Inline phrase spacing beat line-break and standard formats on speed and comprehension |
+| Coleman & Kim (1961) | Inline spacing held speed and raised comprehension; line-break arms were significantly slower |
+| Jandreau, Muncer & Bever (1986) | +16% → +20% words read; gap 1.7–2.9× normal space |
+| Keenan (1984) | Line-break chunking significantly slower than standard — line-length variability is the mechanism |
+| Jandreau & Bever (1992) | Even-spaced control: zero benefit; phrase-spaced: significant for average readers |
+| Bever et al. (1992, Visible Language) | Crude heuristic beat full grammar parse (p<.025); gap magnitude had no significant effect |
+| Mason & Kendall (1978) | Low-ability readers' comprehension improved; high-ability: no effect |
+| Negin (1987) | Segmentation significantly aided comprehension for hearing-impaired readers |
+| Lefton, Nagle & Johnson (1979) | Eye-movement evidence: poor readers more fixations, longer durations, more regressions |
 
 ---
 
-## Hard rules (never violated)
+## How to use it
 
-1. **DRM**: If `META-INF/encryption.xml` contains `<EncryptedData>` entries, the EPUB is refused with a clear message. DRM is never removed, bypassed, or circumvented.
-2. **Validity**: If any content document fails to process, it is left untouched. A broken document is better than a corrupted one.
-3. **Privacy**: Files are processed in a temporary directory that is always deleted after the request completes. No user books are retained.
+1. Open the [live app](https://replit.com/@accounts571/EPUB-Phrase-Enhancer)
+2. Try the live preview with your own text — no file upload required
+3. Upload a DRM-free EPUB
+4. Choose your settings (see below)
+5. Click **Process Book** and download your file
 
----
-
-## Stack
-
-- **Backend**: Flask (Python), ebooklib, BeautifulSoup4/lxml, spaCy, benepar
-- **Frontend**: React + Vite, TypeScript, shadcn/ui, Tailwind CSS
-- **EPUB processing**: stdlib `zipfile` (no ebooklib write path, for maximum ZIP fidelity)
+**For best results:** set your Kindle to left-aligned (ragged-right) text. Justified text stretches normal word spaces unpredictably, which can cancel out the phrase-gap contrast. PhraseFlow injects a left-alignment instruction into the processed file, which has successfully overridden the Kindle justified setting in testing — but setting it manually (Settings → Reading → Alignment) is the reliable fallback.
 
 ---
 
-## Running locally
+## Settings
 
-```bash
-# Backend
-cd artifacts/api-server
-pip install flask ebooklib beautifulsoup4 lxml spacy benepar
-python -m spacy download en_core_web_sm
-python -m spacy download es_core_news_sm
-python -c "import benepar; benepar.download('benepar_en3')"
-python app.py
+### Processing mode
 
-# Frontend
-pnpm --filter @workspace/epub-injector run dev
+| Mode | What it does |
+|---|---|
+| **Natural Scan** *(default)* | A fast, statistical read of phrase onsets from word-pattern cues — no full grammar analysis. Mirrors the rough first-pass the eye already makes. This is the better-supported mode in the evidence: in the only direct comparison, the crude heuristic significantly outperformed the full grammar parse (Bever et al. 1992, p<.025). |
+| **Grammar Parse** | A complete grammatical analysis via spaCy's dependency parser. More linguistically precise — but precision is not what the research shows helps reading. Kept for comparison while real-world A/B tests are ongoing. |
+
+### Reading Support
+
+| Setting | What it does |
+|---|---|
+| **Balanced** *(default)* | Breaks at main phrase boundaries, keeping groups around 2–3 words. Grounded in Bever et al. (1992) phrasetree: minimum phrase length 3 words; breaks at conjunctions and prepositions. Best for everyday reading. |
+| **Strong** | Finer breaks into smaller groups. Research shows this extra support especially helps developing and non-native readers — and it can help any reader tackling dense or unfamiliar material (Jandreau, Muncer & Bever 1986, Exp. 2: adding minor boundaries lifted poor readers from +16% to +20%). |
+
+There is no Spacing Width control. The gap is fixed at the evidence-calibrated value (U+2009 thin space). Making it wider has no measurable effect on reading performance.
+
+---
+
+## Architecture
+
+### Inline-only, no line breaks
+
+Three independent papers establish why PhraseFlow inserts inline gaps rather than restructuring text into phrase-per-line:
+
+- **North & Jenkins (1951):** inline spacing significantly beat line-break format on both speed and comprehension.
+- **Coleman & Kim (1961):** horizontal inline spacing outperformed vertical line-break arms, which were significantly slower.
+- **Keenan (1984):** one chunk per line was read significantly *more slowly* than standard text in all conditions, due to line-length variability disrupting return sweeps.
+
+Inline spacing also survives Kindle reflow and font-size changes; a fixed line-break structure does not.
+
+### Algorithm constants
+
+All calibration values live in a single source-of-truth file:
+
 ```
+GAP_CHARACTER           = U+2009  # THIN SPACE — ~1.8× a normal word space
+                                  # Bever et al. 1992: gap magnitude above threshold
+                                  # has no significant effect on readability.
+
+GAP_CHARACTER_FALLBACK  = U+2002  # EN SPACE — not user-exposed.
+                                  # Reserved for future device testing only.
+
+BALANCED_MIN_CHARS      = 14      # ~2.5-word minimum chunk.
+                                  # Bever et al. 1992: phrasetree stops at phrases
+                                  # under 3 words. Jandreau & Bever 1992: confirmed.
+
+STRONG_MIN_CHARS        = 10      # Finer chunking for developing readers / dense material.
+                                  # Jandreau, Muncer & Bever 1986 Exp. 2: adding minor
+                                  # boundaries lifted poor readers from +16% to +20%.
+
+MIN_PHRASE_LENGTH       = 3       # Bever et al. 1992 phrasetree specification.
+
+BALANCED_TRIGGERS       = [CCONJ, SCONJ, ADP]
+STRONG_TRIGGERS         = [CCONJ, SCONJ, ADP, who, which, whom]
+```
+
+### Processing pipeline
+
+1. Validate the uploaded file is a real EPUB (a ZIP of XHTML)
+2. DRM guard: if `encryption.xml` or other DRM markers are present, refuse clearly
+3. Unzip; walk each XHTML document, editing **only text nodes** — never tags, attributes, scripts, styles, or word interiors
+4. Insert U+2009 at boundaries chosen by the selected mode and Reading Support setting
+5. Inject `text-align: left` into the EPUB stylesheet
+6. Repack into a valid EPUB, preserving all metadata and markup; if a single document fails, leave it untouched rather than corrupting the file
+7. Return to user; temp files deleted immediately
+
+### Tech stack
+
+- **Backend:** Python · Flask · `ebooklib` · `BeautifulSoup` / `bs4` · `spaCy` (`en_core_web_sm`, `es_core_news_sm`)
+- **Frontend:** React · Lora serif
+- **Hosting:** Replit
+
+---
+
+## What PhraseFlow does not do
+
+- **Does not remove DRM.** It cannot, and it refuses to process DRM-protected files.
+- **Does not change words, markup, or layout.** It edits whitespace only.
+- **Does not store your books.** Files are processed in a temporary directory and deleted immediately after download. No IP addresses, no personal data, no retention.
+- **Does not guarantee an improvement.** Roughly half of all studies in the research corpus found no significant effect. Your experience will vary with reading skill, material difficulty, and individual sensitivity to the cue.
+
+---
+
+## Limitations & honest caveats
+
+- The benefit concentrates in **developing, average, and non-native readers**, and in **harder material**. For a fluent reader on easy, familiar text, expect a small comfort gain at most.
+- **Justified text can cancel the effect.** Set your e-reader to left-aligned.
+- The research base used **print and screen**, not Kindle specifically. The gap character has been verified on Kindle Paperwhite 12 / Amazon Ember but not exhaustively across all devices and fonts.
+- **Both processing modes are retained** while real-world A/B testing is ongoing. Natural Scan is the current recommended default based on the literature. The Grammar Parse engine will be removed once tests confirm or refute Natural Scan's advantage.
+- Language support is currently **English and Spanish** only. Other languages require additional spaCy models and break-trigger lists calibrated to their phrase structure.
 
 ---
 
 ## Contributing
 
-Free and open. Contributions welcome — especially on algorithm quality, edge cases in EPUB structure, additional language support, and evidence from reading research.
+Contributions welcome. The highest-value open items:
 
-This is a reading aid, not a medical device.
+- **Real-world A/B reading tests** comparing Natural Scan vs. Grammar Parse on the same processed books — this is the data that will determine which engine survives.
+- **Additional language support** (French, German, Italian are natural next candidates given spaCy model availability).
+- **Device verification** — if you test a processed EPUB on a Kobo, Apple Books, or any non-Kindle device and can report whether the thin space renders visibly, that's directly useful data.
+- **Bug reports** on DRM detection, EPUB structure edge cases, or processing failures.
+
+Please open an issue before starting significant work so we can discuss scope and direction.
+
+---
+
+## License
+
+MIT. See [LICENSE](LICENSE).
+
+---
+
+## Acknowledgments
+
+PhraseFlow is directly inspired by Asym, a phrase-spacing tool developed by Asymmetrica Labs. Asym is no longer available. PhraseFlow is an independent, open-source reconstruction built from the published scientific literature rather than from Asym's code or copy.
+
+The scientific foundation rests on a body of research stretching from North & Jenkins (1951) through Bever, Jandreau, and colleagues' work in the 1980s and 1990s. The core insight — that phrase-sensitive spacing helps reading, that the mechanism is perceptual not orthographic, and that the effect is strongest for readers who haven't yet automated phrase-grouping — belongs to that literature.
