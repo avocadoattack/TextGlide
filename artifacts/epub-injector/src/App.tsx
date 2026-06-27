@@ -939,13 +939,13 @@ function Home() {
           <div className="grid md:grid-cols-2 gap-x-12 gap-y-5 text-muted-foreground leading-relaxed">
             <div className="space-y-1">
               <p className="font-medium text-foreground">Chunking</p>
-              <p>Fluent readers don’t read word by word. They group words into phrases and take in each group at a glance. TextGlide subtly surfaces these natural word groupings in your text, so your eyes work less.</p>
+              <p>Fluent readers don’t read word by word. They group words into phrases and take in each group at a glance. TextGlide subtly surfaces these natural word groupings in your text, so your eyes and brain work less.</p>
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">
                 Syntactically cued formatting
               </p>
-              <p>Adding spacing to show phrase breaks helps readers. North & Jenkins first studied this in 1951 and found that readers were faster and understood more when phrase structure was marked (read: cued). Many later studies have confirmed these results.</p>
+              <p>Adding spacing to show phrase breaks helps readers. North & Jenkins first studied this in 1951 and found that readers were faster and understood more when phrase structure was cued. Many later studies have confirmed this.</p>
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">Pseudosyntax</p>
