@@ -151,7 +151,7 @@ function Home() {
 
   const [gapsOpen, setGapsOpen] = useState(false);
   useEffect(() => {
-    const id = setTimeout(() => setGapsOpen(true), 1200);
+    const id = setTimeout(() => setGapsOpen(true), 1700);
     return () => clearTimeout(id);
   }, []);
 
@@ -355,7 +355,7 @@ function Home() {
           display: inline-block;
           width: 0;
           overflow: hidden;
-          transition: width 1400ms ease-out;
+          transition: width 1700ms ease-out;
         }
         .gaps-open .gap-span {
           width: 0.22em;
