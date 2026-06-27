@@ -1,0 +1,76 @@
+Make the following two changes. Do NOT modify any existing section content, copy, processing logic, or layout outside of what is specified.
+
+---
+
+## CHANGE 1: Footer revamp
+
+Replace the current footer with a redesigned footer that contains the following elements, laid out in a clean single-row (desktop) or stacked (mobile) arrangement:
+
+### Left cluster: Creator credit
+- A circular avatar image using the file at `/public/Avocado-Attack-Avatar.svg`
+  - Display size: 32×32px, border-radius: 50%
+  - Vertically centered with the text beside it
+- Text: "Created by Mr. Avocado" in the existing body font, muted color (match the existing footer text tone, e.g. #888 or similar)
+
+### Center cluster: Legal
+- Text: "© 2026 Mr. Avocado"
+- Text: "MIT License" — this is a hyperlink to https://opensource.org/licenses/MIT — opens in new tab, same muted style
+- Text (keep existing): "TextGlide — a reading aid, not a medical device." in the lightest/most muted text style
+
+All three lines stacked vertically, centered, small font (12–13px).
+
+### Right cluster: Links
+- GitHub icon link:
+  - Use an inline SVG GitHub mark icon (the Invertocat logo — simple path, no external CDN)
+  - Links to https://github.com/avocadoattack/textglide — opens in new tab
+  - Icon size: 20px, color: inherit muted tone, hover: darkens to near-black
+  - No label text, just the icon
+
+- Buy Me a Coffee button:
+  - Label: "☕ Support TextGlide"
+  - Links to https://buymeacoffee.com/avocadoattack — opens in new tab
+  - Style: small pill button, warm background (use the site's existing accent or a warm amber tone like #FFDD00 or softer — match what looks right against the page palette), dark text, font-size 13px, border-radius 20px, padding 6px 14px
+  - Subtle hover: slight darkening, no dramatic animation
+  - No external BMC script or widget — this is a plain styled anchor tag only
+
+### Footer layout:
+- On desktop (≥768px): single row, space-between, left / center / right clusters
+- On mobile (<768px): stacked vertically, centered, with 12px gap between clusters
+- Padding: 32px 40px (desktop), 28px 20px (mobile)
+- Top border: 1px solid, very light (e.g. #E8E4DC or similar, matching existing dividers)
+- Background: match the existing footer/page background
+
+---
+
+## CHANGE 2: Post-processing "support" toast
+
+After a user successfully processes an EPUB and the download button becomes visible, show a dismissible toast notification with the following behavior:
+
+### Timing:
+- Appears 1500ms (1.5 seconds) after the download button renders
+- Only appears once per browser session (use sessionStorage key "bmcToastShown" — if the key exists, skip the toast entirely)
+- On show, set sessionStorage key "bmcToastShown" to "true"
+
+### Content:
+- Text: "TextGlide is free. If it saves you reading time, a coffee helps keep it running."
+- Link: "☕ Buy me a coffee" — href https://buymeacoffee.com/avocadoattack, opens in new tab
+- Dismiss button: a small "×" in the top-right corner of the toast
+
+### Positioning:
+- Fixed, bottom-right corner of the viewport
+- Offset: bottom: 24px, right: 24px
+- Width: 280px max
+- Z-index: 1100
+
+### Style:
+- Background: warm dark tone (e.g. #2a2016 or the darkest brown used elsewhere in the site)
+- Text: white or near-white, font-size 13px, line-height 1.5
+- The coffee link: warm amber/yellow accent color, no underline, font-weight 600
+- border-radius: 14px
+- padding: 16px 18px
+- Soft drop shadow
+- Dismiss "×": top-right, 16px, muted white, cursor pointer
+
+### Animation:
+- Slides up from below + fades in over 250ms on appear
+- Fades out over 200ms on dismiss, then removes from DOM
