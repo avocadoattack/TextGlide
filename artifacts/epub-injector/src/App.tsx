@@ -360,6 +360,25 @@ function Home() {
         .gaps-open .gap-span {
           width: 0.22em;
         }
+        @keyframes cursorPulse {
+          0%   { opacity: 0; }
+          15%  { opacity: 0.75; }
+          45%  { opacity: 0.75; }
+          65%  { opacity: 0.2; }
+          85%  { opacity: 0.65; }
+          100% { opacity: 0; }
+        }
+        .gaps-open .gap-span::after {
+          content: '';
+          display: inline-block;
+          width: 2px;
+          height: 0.85em;
+          background: rgba(180, 140, 80, 0.65);
+          vertical-align: text-bottom;
+          margin-left: 1px;
+          border-radius: 1px;
+          animation: cursorPulse 1500ms ease-out forwards;
+        }
         .after-text-mobile  { display: none; }
         .before-text-mobile { display: none; }
         @media (max-width: 640px) {
