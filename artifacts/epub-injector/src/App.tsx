@@ -149,6 +149,12 @@ function Home() {
   const [downloadUrl, setDownloadUrl] = useState("");
   const [downloadFilename, setDownloadFilename] = useState("");
 
+  const [gapsOpen, setGapsOpen] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setGapsOpen(true), 600);
+    return () => clearTimeout(id);
+  }, []);
+
   // Fade chevron when hero scrolls out of view
   useEffect(() => {
     const el = heroRef.current;
@@ -344,6 +350,16 @@ function Home() {
           transform-origin: left center;
           animation: phraseHighlightSweep 5.2s ease-out infinite;
         }
+
+        .gap-span {
+          display: inline-block;
+          width: 0;
+          overflow: hidden;
+          transition: width 600ms ease-out;
+        }
+        .gaps-open .gap-span {
+          width: 0.22em;
+        }
       `}</style>
       {/* ── 1. Hero — full viewport ─────────────────────────────────────── */}
       <section
@@ -387,22 +403,8 @@ function Home() {
               <div className="text-xs uppercase tracking-wider text-primary font-semibold mb-3 md:mb-5">
                 After
               </div>
-              <p className="font-serif text-base md:text-xl leading-[2] text-foreground">
-                <SweepPhrase index={0} total={4}>
-                  She wrote every morning
-                </SweepPhrase>
-                {" "}
-                <SweepPhrase index={1} total={4}>
-                  by the window,
-                </SweepPhrase>
-                {" "}
-                <SweepPhrase index={2} total={4}>
-                  while the city came slowly awake outside
-                </SweepPhrase>
-                {" "}
-                <SweepPhrase index={3} total={4}>
-                  and the light changed.
-                </SweepPhrase>
+              <p className={`font-serif text-base md:text-xl leading-[2] text-foreground${gapsOpen ? " gaps-open" : ""}`}>
+                She wrote every morning<span className="gap-span" aria-hidden="true" /> by the window,<span className="gap-span" aria-hidden="true" /> while the city came slowly awake outside<span className="gap-span" aria-hidden="true" /> and the light changed.
               </p>
             </div>
           </div>
