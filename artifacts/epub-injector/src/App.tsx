@@ -380,9 +380,6 @@ function Home() {
           [data-testid="hero-comparison"] > div {
             padding: 1.75rem;
           }
-          [data-testid="hero-comparison"] > div p {
-            font-size: 0.82rem;
-          }
         }
       `}</style>
       {/* ── 1. Hero — full viewport ─────────────────────────────────────── */}
