@@ -780,7 +780,7 @@ function Home() {
 
               {/* Left-align reminder */}
               <p className="text-xs text-muted-foreground/70 text-center w-full leading-relaxed">
-                For best results, set your Kindle to <strong className="text-muted-foreground">left-aligned (ragged-right)</strong> text. Justified text stretches normal spaces and can cancel out the phrase spacing.
+                For best results, set your e-Reader to <strong className="text-muted-foreground">left-aligned (ragged-right)</strong> text. Justified text stretches normal spaces and can cancel out the phrase spacing.
               </p>
 
               {/* Process button */}
