@@ -1085,7 +1085,7 @@ function Home() {
           data-testid="section-why"
         >
           <h3 className="font-serif text-2xl text-foreground">Why it exists</h3>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">Fluent readers don't read one word at a time; they take in meaningful phrases per glance. TextGlide swiftly rebuilds your EPUBs to gently cue those phrase groups with carefully calibrated extra spacing: a free, open-source tool that works on any e-reader that accepts EPUBs.</p>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">Fluent readers don't read word by word; they take in phrases at a glance. TextGlide swiftly rebuilds your EPUB files to gently cue these phrase groups with carefully calibrated extra spacing. It’s a free, open-source tool that works on any e-reader that accepts EPUBs.</p>
         </section>
       </main>
       {/* Footer */}
