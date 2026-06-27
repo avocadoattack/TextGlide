@@ -419,7 +419,7 @@ function Home() {
                 slowly awake outside and the light changed.
               </p>
               <p className="before-text-mobile font-serif text-base leading-[2] text-foreground">
-                She wrote every morning by the window.
+                She wrote every morning by the window, light still soft.
               </p>
             </div>
             <div className="p-5 md:p-8 rounded-xl bg-primary/5 border border-primary/20 shadow-sm relative overflow-hidden">
@@ -431,7 +431,7 @@ function Home() {
                 She wrote every morning<span className="gap-span" aria-hidden="true" /> by the window,<span className="gap-span" aria-hidden="true" /> while the city came slowly awake outside<span className="gap-span" aria-hidden="true" /> and the light changed.
               </p>
               <p className={`after-text-mobile font-serif text-base leading-[2] text-foreground${gapsOpen ? " gaps-open" : ""}`}>
-                She wrote every morning<span className="gap-span" aria-hidden="true" /> by the window.
+                She wrote every morning<span className="gap-span" aria-hidden="true" /> by the window,<span className="gap-span" aria-hidden="true" /> light still soft.
               </p>
             </div>
           </div>
