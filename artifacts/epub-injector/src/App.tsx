@@ -36,7 +36,7 @@ import NotFound from "@/pages/not-found";
 const queryClient = new QueryClient();
 
 const defaultPreviewText =
-  "The ability to read fluently depends not just on recognizing individual words, but on grouping them into meaningful phrases, which helps the eye and brain process language in easier chunks. Skilled readers do this automatically, taking in chunks of language per glance rather than processing one word at a time. This is why the same passage can feel effortless to one reader and laborious to another. The difference often lies not in vocabulary, but in how efficiently the eye and brain carve the sentence into natural units. When spacing cues are added at phrase boundaries, even struggling readers begin to show eye-movement patterns closer to those of fluent readers, with fewer regressions and shorter fixation durations, making reading feel less effortful.";
+  "The ability to read fluently depends not just on recognizing individual words, but on grouping them into meaningful phrases, which helps the eye and brain process language in easier chunks. Skilled readers do this automatically, taking in chunks of language per glance rather than processing one word at a time. This makes the same passage feel effortless to one reader and laborious to another. The difference often lies not in vocabulary, but in how efficiently the eye and brain carve the sentence into natural units. When spacing cues are added at phrase boundaries, even struggling readers begin to show eye-movement patterns closer to those of fluent readers, with fewer regressions and shorter fixation durations, making reading feel less effortful and easier to sustain.";
 
 type Mode = "pseudosyntactic" | "syntactic";
 type ReadingSupport = "balanced" | "strong";
