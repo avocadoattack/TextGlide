@@ -1027,7 +1027,7 @@ function Home() {
               },
               {
                 q: "Does this actually work?",
-                a: "Across roughly two dozen studies of phrase-based spacing, the ones that reached statistical significance averaged about a 12.7% gain in comprehension and a 9.9% gain in reading speed; several other studies found no significant effect, so it is best treated as a real but modest, not guaranteed, improvement. The benefit is largest for developing, average, and non-native readers — in one study weaker readers improved about 37% versus about 6% for the strongest readers — and on harder material. Importantly, the gain comes from breaking at the right phrase boundaries, not from extra whitespace: a control condition with the same amount of extra space spread evenly produced no benefit at all (Jandreau & Bever 1992; Bever et al. 1992).",
+                a: "Across roughly two dozen studies of phrase-based spacing, the ones that reached statistical significance averaged about a 12.7% gain in comprehension and a 9.9% gain in reading speed; several other studies found no significant effect, so it is best treated as a real but modest, not guaranteed, improvement. The benefit is largest for developing, average, and non-native readers. For example, in one study, weaker readers improved about 37% compared to about 6% for the strongest readers (Bever et al. 1992), and the benefit is greater on harder material. Importantly, the gain comes from breaking at the right phrase boundaries, not from extra whitespace: a control condition with the same amount of extra space spread evenly produced no benefit at all (Jandreau & Bever 1992; Bever et al. 1992).",
               },
               {
                 q: "Does TextGlide remove DRM?",
@@ -1035,15 +1035,15 @@ function Home() {
               },
               {
                 q: "How do I choose between Natural Scan and Grammar Parse?",
-                a: "Natural Scan reads word-pattern cues to guess phrase boundaries — the same rough first-pass your brain makes before fully parsing a sentence. Grammar Parse runs a complete grammatical analysis before placing breaks. Interestingly, head-to-head research found the faster statistical method (Natural Scan) matched or beat the precise grammar parse for readability, which is why Natural Scan is the default. Try Grammar Parse if you want to compare, but most readers won't notice a difference.",
+                a: "Natural Scan reads word-pattern cues to guess phrase boundaries, similar to the rough first pass your brain makes before fully parsing a sentence. Grammar Parse runs a complete grammatical analysis before placing breaks. Head-to-head research found that the faster statistical method significantly outperformed the precise grammar parse for readability (Bever et al. 1992), which is why Natural Scan is the default. Try Grammar Parse if you want to compare, but the evidence favors Natural Scan.",
               },
               {
                 q: "Can I adjust the Reading Support level?",
-                a: "Yes. The Reading Support control lets you choose between Balanced and Strong. Balanced breaks at major phrase boundaries, keeping groups around 2–3 words — ideal for everyday reading. Strong adds finer breaks, which research shows especially helps developing and non-native readers and anyone tackling dense material. The live preview updates immediately so you can see the difference before processing any file.",
+                a: "Yes. The Reading Support control lets you choose between Balanced and Strong. Balanced breaks at major phrase boundaries, keeping groups around 3 to 5 words, which is ideal for everyday reading. Strong adds finer breaks, which research shows especially help developing and non-native readers, as well as anyone tackling dense material. The live preview updates immediately, so you can see the difference before processing any file.",
               },
               {
                 q: "Why set my Kindle to left-aligned?",
-                a: "Kindle's default justified layout stretches the normal spaces between words to fill each line. This stretching is unpredictable — it varies line by line — which can erase the contrast between ordinary word spaces and the phrase gaps TextGlide inserts. All the supporting research was conducted on left-aligned (ragged-right) text, where word spaces stay a fixed size and the phrase gaps stand out clearly. TextGlide injects a left-alignment rule inside the processed file as a best effort, but your device's own setting can override it, so it's worth setting it manually too: on a Kindle, go to Aa → Alignment → Left.",
+                a: "Kindle's default justified layout stretches the normal word spacing to fill each line. This stretching is unpredictable, varying line by line, and can erase the contrast between ordinary word spaces and the phrase gaps TextGlide inserts. All supporting research was conducted on left-aligned (ragged-right) text, where word spacing remains fixed and phrase gaps stand out clearly. TextGlide injects a left-alignment rule into the processed file as a best effort, but your device's own setting can override it. It's worth setting it manually as well.",
               },
               {
                 q: "What if I don't like the result?",
