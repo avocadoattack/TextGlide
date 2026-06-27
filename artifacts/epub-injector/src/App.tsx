@@ -105,6 +105,8 @@ function Home() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [peeking, setPeeking] = useState(false);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<
@@ -245,6 +247,16 @@ function Home() {
         err instanceof Error ? err.message : "An unexpected error occurred",
       );
     }
+  };
+
+  const handleReset = () => {
+    setFile(null);
+    setStatus("idle");
+    setErrorMsg("");
+    setFallbackMsg("");
+    setDownloadUrl("");
+    setDownloadFilename("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -416,7 +428,24 @@ function Home() {
                 {/* Left col: Mode + Language */}
                 <div className="space-y-6">
                   <div className="space-y-3">
-                    <Label className="text-sm font-medium">Mode</Label>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium">Mode</Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            className="text-muted-foreground hover:text-foreground"
+                            data-testid="tooltip-mode"
+                          >
+                            <InfoIcon className="h-4 w-4" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-[260px] p-3 text-sm">
+                          Controls how TextGlide identifies phrase boundaries.
+                          Natural Scan uses a fast statistical approach; Grammar
+                          Parse uses a full grammatical analysis.
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
                     <RadioGroup
                       value={state.mode}
                       onValueChange={(v: Mode) =>
@@ -688,6 +717,7 @@ function Home() {
               >
                 <input
                   id="epub-upload"
+                  ref={fileInputRef}
                   type="file"
                   accept=".epub"
                   className="hidden"
@@ -749,7 +779,7 @@ function Home() {
               </div>
 
               {/* Left-align reminder */}
-              <p className="text-xs text-muted-foreground/70 text-center max-w-sm leading-relaxed">
+              <p className="text-xs text-muted-foreground/70 text-center w-full leading-relaxed">
                 For best results, set your Kindle to <strong className="text-muted-foreground">left-aligned (ragged-right)</strong> text. Justified text stretches normal spaces and can cancel out the phrase spacing.
               </p>
 
@@ -820,18 +850,29 @@ function Home() {
                   >
                     <div className="flex items-center text-primary font-medium gap-3">
                       <CheckCircle2 className="h-6 w-6" />
-                      <span className="text-lg">Ready for Kindle</span>
+                      <span className="text-lg">Ready for e-Reader</span>
                     </div>
-                    <Button
-                      asChild
-                      className="rounded-lg shadow-sm"
-                      size="lg"
-                      data-testid="link-download"
-                    >
-                      <a href={downloadUrl} download={downloadFilename}>
-                        <Download className="mr-2 h-4 w-4" /> Download Book
-                      </a>
-                    </Button>
+                    <div className="flex items-center gap-3">
+                      <Button
+                        asChild
+                        className="rounded-lg shadow-sm"
+                        size="lg"
+                        data-testid="link-download"
+                      >
+                        <a href={downloadUrl} download={downloadFilename}>
+                          <Download className="mr-2 h-4 w-4" /> Download Book
+                        </a>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        className="rounded-lg"
+                        onClick={handleReset}
+                        data-testid="button-reset"
+                      >
+                        Process Another Book
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
