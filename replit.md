@@ -1,6 +1,6 @@
-# PhraseFlow
+# TextGlide
 
-PhraseFlow inserts subtle Unicode spacing at natural phrase boundaries in DRM-free EPUBs, so readers' eyes group words the way fluent readers already do, then returns a Kindle-ready file.
+TextGlide inserts subtle Unicode spacing at natural phrase boundaries in DRM-free EPUBs, so readers' eyes group words the way fluent readers already do, then returns a Kindle-ready file.
 
 ## Run & Operate
 

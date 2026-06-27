@@ -1,10 +1,10 @@
-# PhraseFlow
+# TextGlide
 
 **Read in phrases, not word by word.**
 
-PhraseFlow is a free, open-source web app that inserts empirically-calibrated spacing at phrase boundaries inside EPUB files, then hands back a Kindle-ready EPUB. The goal is to make the natural groupings of language visible on the page — the way fluent readers' eyes already move, just without the visual cue.
+TextGlide is a free, open-source web app that inserts empirically-calibrated spacing at phrase boundaries inside EPUB files, then hands back a Kindle-ready EPUB. The goal is to make the natural groupings of language visible on the page — the way fluent readers' eyes already move, just without the visual cue.
 
-**Live app:** [phraseflow.replit.app](https://replit.com/@accounts571/EPUB-Phrase-Enhancer)
+**Live app:** [textglide.replit.app](https://replit.com/@accounts571/EPUB-Phrase-Enhancer)
 
 ---
 
@@ -12,13 +12,13 @@ PhraseFlow is a free, open-source web app that inserts empirically-calibrated sp
 
 Fluent readers don't process text word by word. They take in meaningful phrases per glance — the eye lands, the brain encodes the chunk, the eye moves on. For skilled readers this is automatic; for developing, non-native, or fatigued readers it often isn't, and it's the source of the gap in reading speed and comprehension.
 
-PhraseFlow takes a DRM-free EPUB, parses every sentence, and inserts a fixed-width thin space (U+2009) at phrase boundaries — **inline**, not as a line-break cascade. The result is a file that reads identically on every e-reader and survives font-size changes and Kindle reflow, because it only edits whitespace. Words, markup, and layout are untouched.
+TextGlide takes a DRM-free EPUB, parses every sentence, and inserts a fixed-width thin space (U+2009) at phrase boundaries — **inline**, not as a line-break cascade. The result is a file that reads identically on every e-reader and survives font-size changes and Kindle reflow, because it only edits whitespace. Words, markup, and layout are untouched.
 
 ---
 
 ## The evidence
 
-PhraseFlow's algorithm is calibrated directly against the peer-reviewed literature. Ten papers were read in full; the core finding, replicated across roughly two dozen English-language studies (Bever et al. 1992):
+TextGlide's algorithm is calibrated directly against the peer-reviewed literature. Ten papers were read in full; the core finding, replicated across roughly two dozen English-language studies (Bever et al. 1992):
 
 - **+12.7% comprehension** (subject-weighted mean across significant studies)
 - **+9.9% reading speed** (subject-weighted mean across significant studies)
@@ -31,7 +31,7 @@ Roughly half the studies in the full corpus found no significant effect. The gai
 | Average readers | Significant (Jandreau & Bever 1992) |
 | Strong / fluent readers | ~+6%, not statistically significant |
 
-**The key mechanistic finding:** the gain comes from *where* the gap lands, not from extra whitespace. Jandreau & Bever (1992) tested a matched control with the same total whitespace spread evenly — it produced zero benefit. This is why PhraseFlow fixes the gap at one calibrated width rather than exposing it as a slider.
+**The key mechanistic finding:** the gain comes from *where* the gap lands, not from extra whitespace. Jandreau & Bever (1992) tested a matched control with the same total whitespace spread evenly — it produced zero benefit. This is why TextGlide fixes the gap at one calibrated width rather than exposing it as a slider.
 
 **Gap width:** U+2009 thin space, ~1.8× a normal word space (additive, confirmed by XHTML inspection and visual verification on Kindle Paperwhite 12 / Amazon Ember). This sits at the evidence-calibrated center: Bever et al. (1992) tested two gap magnitudes (1.75× and 2.5×) and found no significant difference between them.
 
@@ -59,7 +59,7 @@ Roughly half the studies in the full corpus found no significant effect. The gai
 4. Choose your settings (see below)
 5. Click **Process Book** and download your file
 
-**For best results:** set your Kindle to left-aligned (ragged-right) text. Justified text stretches normal word spaces unpredictably, which can cancel out the phrase-gap contrast. PhraseFlow injects a left-alignment instruction into the processed file, which has successfully overridden the Kindle justified setting in testing — but setting it manually (Settings → Reading → Alignment) is the reliable fallback.
+**For best results:** set your Kindle to left-aligned (ragged-right) text. Justified text stretches normal word spaces unpredictably, which can cancel out the phrase-gap contrast. TextGlide injects a left-alignment instruction into the processed file, which has successfully overridden the Kindle justified setting in testing — but setting it manually (Settings → Reading → Alignment) is the reliable fallback.
 
 ---
 
@@ -87,7 +87,7 @@ There is no Spacing Width control. The gap is fixed at the evidence-calibrated v
 
 ### Inline-only, no line breaks
 
-Three independent papers establish why PhraseFlow inserts inline gaps rather than restructuring text into phrase-per-line:
+Three independent papers establish why TextGlide inserts inline gaps rather than restructuring text into phrase-per-line:
 
 - **North & Jenkins (1951):** inline spacing significantly beat line-break format on both speed and comprehension.
 - **Coleman & Kim (1961):** horizontal inline spacing outperformed vertical line-break arms, which were significantly slower.
@@ -139,7 +139,7 @@ STRONG_TRIGGERS         = [CCONJ, SCONJ, ADP, who, which, whom]
 
 ---
 
-## What PhraseFlow does not do
+## What TextGlide does not do
 
 - **Does not remove DRM.** It cannot, and it refuses to process DRM-protected files.
 - **Does not change words, markup, or layout.** It edits whitespace only.
@@ -179,6 +179,6 @@ MIT. See [LICENSE](LICENSE).
 
 ## Acknowledgments
 
-PhraseFlow is directly inspired by Asym, a phrase-spacing tool developed by Asymmetrica Labs. Asym is no longer available. PhraseFlow is an independent, open-source reconstruction built from the published scientific literature rather than from Asym's code or copy.
+TextGlide is directly inspired by Asym, a phrase-spacing tool developed by Asymmetrica Labs. Asym is no longer available. TextGlide is an independent, open-source reconstruction built from the published scientific literature rather than from Asym's code or copy.
 
 The scientific foundation rests on a body of research stretching from North & Jenkins (1951) through Bever, Jandreau, and colleagues' work in the 1980s and 1990s. The core insight — that phrase-sensitive spacing helps reading, that the mechanism is perceptual not orthographic, and that the effect is strongest for readers who haven't yet automated phrase-grouping — belongs to that literature.

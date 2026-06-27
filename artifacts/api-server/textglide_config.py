@@ -1,5 +1,5 @@
 """
-PhraseFlow — algorithm calibration (single source of truth).
+TextGlide — algorithm calibration (single source of truth).
 
 All thresholds, gap characters, and trigger sets live here.
 Both the Quick Pass (pseudosyntactic) and Grammar Parser (syntactic) engines

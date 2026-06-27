@@ -1,5 +1,5 @@
 """
-PhraseFlow — Flask backend.
+TextGlide — Flask backend.
 
 Routes:
   GET  /api/healthz    — liveness probe
@@ -114,7 +114,7 @@ def process():
     chunk_density = _safe(request.form.get("chunk_density", "balanced"), _VALID_DENSITIES, "balanced")
     language = _safe(request.form.get("language", "auto"), _VALID_LANGS, "auto")
 
-    tmp_dir = tempfile.mkdtemp(prefix="phraseflow_")
+    tmp_dir = tempfile.mkdtemp(prefix="textglide_")
     try:
         input_path = os.path.join(tmp_dir, "input.epub")
         file.save(input_path)
@@ -124,7 +124,7 @@ def process():
             if is_drm_protected(input_path):
                 return jsonify({
                     "error": (
-                        "This EPUB is DRM-protected. PhraseFlow only works with "
+                        "This EPUB is DRM-protected. TextGlide only works with "
                         "DRM-free books. Please use a DRM-free copy."
                     )
                 }), 422
@@ -140,7 +140,7 @@ def process():
             return jsonify({"error": "Processing failed. The file may be malformed."}), 500
 
         stem = Path(file.filename).stem
-        out_filename = f"{stem}_phraseflow.epub"
+        out_filename = f"{stem}_textglide.epub"
         buf = io.BytesIO(epub_bytes)
         buf.seek(0)
 

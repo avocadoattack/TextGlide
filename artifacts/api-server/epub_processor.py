@@ -1,5 +1,5 @@
 """
-PhraseFlow EPUB processor.
+TextGlide EPUB processor.
 
 Inserts a thin-space gap (U+2009) at major phrase boundaries to aid reading
 comprehension. Only text nodes are ever modified — tags, attributes, scripts,
@@ -15,7 +15,7 @@ Reading Support tiers (controls break frequency):
 
 DRM detection: refuses EPUBs that have <EncryptedData> in META-INF/encryption.xml.
 
-All calibration constants imported from phraseflow_config (single source of truth).
+All calibration constants imported from textglide_config (single source of truth).
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ from typing import Literal
 
 from bs4 import BeautifulSoup, NavigableString, Tag
 
-from phraseflow_config import DENSITY_CFG, GAP_CHAR
+from textglide_config import DENSITY_CFG, GAP_CHAR
 
 # ---------------------------------------------------------------------------
 # Constants

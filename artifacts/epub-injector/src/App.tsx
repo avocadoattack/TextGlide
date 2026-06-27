@@ -231,7 +231,7 @@ function Home() {
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const contentDisposition = res.headers.get("Content-Disposition");
-      let filename = "phraseflow_output.epub";
+      let filename = "textglide_output.epub";
       if (contentDisposition) {
         const match = contentDisposition.match(/filename="?([^"]+)"?/);
         if (match && match[1]) filename = match[1];
@@ -637,7 +637,7 @@ function Home() {
                       onTouchCancel={stopPeeking}
                       data-testid="button-peek"
                     >
-                      Without PhraseFlow
+                      Without TextGlide
                     </button>
                   </div>
                 </div>
@@ -982,16 +982,16 @@ function Home() {
           <dl className="space-y-0 divide-y divide-border/40">
             {[
               {
-                q: "Will PhraseFlow work with my e-reader?",
-                a: "PhraseFlow outputs a standard EPUB file. Any e-reader that accepts EPUBs will work, including Kindle, Kobo, Apple Books, and most reading apps. The spacing is inline, so it survives font-size changes and reflow without breaking.",
+                q: "Will TextGlide work with my e-reader?",
+                a: "TextGlide outputs a standard EPUB file. Any e-reader that accepts EPUBs will work, including Kindle, Kobo, Apple Books, and most reading apps. The spacing is inline, so it survives font-size changes and reflow without breaking.",
               },
               {
                 q: "Does this actually work?",
                 a: "Across roughly two dozen studies of phrase-based spacing, the ones that reached statistical significance averaged about a 12.7% gain in comprehension and a 9.9% gain in reading speed; several other studies found no significant effect, so it is best treated as a real but modest, not guaranteed, improvement. The benefit is largest for developing, average, and non-native readers — in one study weaker readers improved about 37% versus about 6% for the strongest readers — and on harder material. Importantly, the gain comes from breaking at the right phrase boundaries, not from extra whitespace: a control condition with the same amount of extra space spread evenly produced no benefit at all (Jandreau & Bever 1992; Bever et al. 1992).",
               },
               {
-                q: "Does PhraseFlow remove DRM?",
-                a: "No, and it can't. PhraseFlow refuses to process any EPUB with DRM and will tell you so clearly. It only works on DRM-free files: books you authored, public-domain texts, or files you've already legally stripped through your own means.",
+                q: "Does TextGlide remove DRM?",
+                a: "No, and it can't. TextGlide refuses to process any EPUB with DRM and will tell you so clearly. It only works on DRM-free files: books you authored, public-domain texts, or files you've already legally stripped through your own means.",
               },
               {
                 q: "How do I choose between Natural Scan and Grammar Parse?",
@@ -1003,15 +1003,15 @@ function Home() {
               },
               {
                 q: "Why set my Kindle to left-aligned?",
-                a: "Kindle's default justified layout stretches the normal spaces between words to fill each line. This stretching is unpredictable — it varies line by line — which can erase the contrast between ordinary word spaces and the phrase gaps PhraseFlow inserts. All the supporting research was conducted on left-aligned (ragged-right) text, where word spaces stay a fixed size and the phrase gaps stand out clearly. PhraseFlow injects a left-alignment rule inside the processed file as a best effort, but your device's own setting can override it, so it's worth setting it manually too: on a Kindle, go to Aa → Alignment → Left.",
+                a: "Kindle's default justified layout stretches the normal spaces between words to fill each line. This stretching is unpredictable — it varies line by line — which can erase the contrast between ordinary word spaces and the phrase gaps TextGlide inserts. All the supporting research was conducted on left-aligned (ragged-right) text, where word spaces stay a fixed size and the phrase gaps stand out clearly. TextGlide injects a left-alignment rule inside the processed file as a best effort, but your device's own setting can override it, so it's worth setting it manually too: on a Kindle, go to Aa → Alignment → Left.",
               },
               {
                 q: "What if I don't like the result?",
-                a: "Your original file is never modified. PhraseFlow processes a copy and provides you with the new file for download, so you can always go back to the original, tweak the settings, and reprocess as many times as you like.",
+                a: "Your original file is never modified. TextGlide processes a copy and provides you with the new file for download, so you can always go back to the original, tweak the settings, and reprocess as many times as you like.",
               },
               {
-                q: "Does PhraseFlow store my books or personal data?",
-                a: "No. Uploaded files are processed in a temporary directory and deleted immediately after your download is ready. PhraseFlow does not log IP addresses, store EPUBs, or collect any personal data. Nothing you upload is ever retained or transmitted anywhere.",
+                q: "Does TextGlide store my books or personal data?",
+                a: "No. Uploaded files are processed in a temporary directory and deleted immediately after your download is ready. TextGlide does not log IP addresses, store EPUBs, or collect any personal data. Nothing you upload is ever retained or transmitted anywhere.",
               },
             ].map(({ q, a }) => (
               <div key={q} className="py-5">
