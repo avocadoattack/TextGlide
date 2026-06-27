@@ -366,7 +366,12 @@ function Home() {
                 After
               </div>
               <p className="font-serif text-base md:text-xl leading-[2] text-foreground">
-                {heroAfterText}
+                {heroAfterText.split("\u2009").map((chunk, i, arr) => (
+                  <span key={i}>
+                    <span style={{ whiteSpace: "nowrap" }}>{chunk}</span>
+                    {i < arr.length - 1 && "\u2009"}
+                  </span>
+                ))}
               </p>
             </div>
           </div>
@@ -780,7 +785,7 @@ function Home() {
 
               {/* Left-align reminder */}
               <p className="text-xs text-muted-foreground/70 text-center w-full leading-relaxed">
-                For best results, set your e-Reader to <strong className="text-muted-foreground">left-aligned (ragged-right)</strong> text. Justified text stretches normal spaces and can cancel out the phrase spacing.
+                For best results, set your e-reader to <strong className="text-muted-foreground">left-aligned (ragged-right)</strong> text. Justified text stretches normal spaces and can cancel out the phrase spacing.
               </p>
 
               {/* Process button */}
@@ -1030,7 +1035,7 @@ function Home() {
                 a: "Yes. The Reading Support setting lets you pick Balanced or Strong. Balanced breaks at main phrase points, grouping about 3 to 5 words, which works well for most reading. Strong adds more breaks, which research shows help developing and non-native readers, as well as anyone reading tough material. The live preview updates right away, so you can see the difference before you process your file.",
               },
               {
-                q: "Why set my e-Reader to left-aligned?",
+                q: "Why set my e-reader to left-aligned?",
                 a: "A justified text layout stretches word spacing to fill each line. This stretching is unpredictable and can erase the calibrated phrase gaps that TextGlide adds. All supporting research on which TextGlide is based used left-aligned (ragged-right) text, where word spacing remains fixed, and phrase gaps are easy to see. TextGlide processing sets a left alignment rule in your file as a best effort, but your device's settings might override it. It's a good idea to set it manually, too.",
               },
               {
@@ -1085,7 +1090,7 @@ function Home() {
           data-testid="section-why"
         >
           <h3 className="font-serif text-2xl text-foreground">Why it exists</h3>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">Fluent readers don't read word by word; they take in phrases at a glance. TextGlide swiftly rebuilds your EPUB files to gently cue these phrase groups with carefully calibrated extra spacing. It’s a free, open-source tool that works on any e-reader that accepts EPUBs.</p>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">Fluent readers don't read one word at a time; they take in meaningful phrases per glance. TextGlide swiftly rebuilds your EPUBs to gently cue those phrase groups with carefully calibrated extra spacing: a free, open-source tool that works on any e-reader that accepts EPUBs.</p>
         </section>
       </main>
       {/* Footer */}
