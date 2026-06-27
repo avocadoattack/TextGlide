@@ -353,7 +353,6 @@ function Home() {
 
         .gap-span {
           display: inline-block;
-          position: relative;
           width: 0;
           overflow: hidden;
           transition: width 1700ms ease-out;
@@ -371,17 +370,14 @@ function Home() {
         }
         .gaps-open .gap-span::after {
           content: '';
-          display: block;
-          position: absolute;
-          top: 50%;
-          left: 0;
-          transform: translateY(-50%);
+          display: inline-block;
           width: 2px;
           height: 0.85em;
-          line-height: 0;
           background: rgba(180, 140, 80, 0.65);
+          vertical-align: text-bottom;
           margin-left: 1px;
           border-radius: 1px;
+          line-height: 0;
           animation: cursorPulse 1500ms ease-out forwards;
         }
         .after-text-mobile  { display: none; }
@@ -451,10 +447,10 @@ function Home() {
               <div className="text-xs uppercase tracking-wider text-primary font-semibold mb-3 md:mb-5">
                 After
               </div>
-              <p className={`after-text-desktop font-serif text-base md:text-xl leading-[2] text-foreground${gapsOpen ? " gaps-open" : ""}`}>
+              <p className={`after-text-desktop font-serif text-base md:text-xl text-foreground${gapsOpen ? " gaps-open" : ""}`} style={{ lineHeight: 1.6 }}>
                 She wrote every morning<span className="gap-span" aria-hidden="true" /> by the window,<span className="gap-span" aria-hidden="true" /> while the city came slowly awake outside<span className="gap-span" aria-hidden="true" /> and the light changed.
               </p>
-              <p className={`after-text-mobile font-serif text-base leading-[2] text-foreground${gapsOpen ? " gaps-open" : ""}`}>
+              <p className={`after-text-mobile font-serif text-base text-foreground${gapsOpen ? " gaps-open" : ""}`} style={{ lineHeight: 1.6 }}>
                 She wrote every morning<span className="gap-span" aria-hidden="true" /> by the window,<span className="gap-span" aria-hidden="true" /> light still soft.
               </p>
             </div>
