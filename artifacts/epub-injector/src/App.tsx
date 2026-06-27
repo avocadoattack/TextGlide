@@ -973,14 +973,7 @@ function Home() {
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">Eye-fixation span</p>
-              <p>
-                The eye takes in roughly 1–2 words per fixation, spending
-                around 250ms on each. Poor readers make more fixations, hold
-                them longer, and regress more often than skilled readers.
-                Phrase-sized chunks align with this natural fixation rhythm,
-                reducing the work per glance (Lefton, Nagle &amp; Johnson,
-                1979).
-              </p>
+              <p>The eye takes in roughly 1–2 words per fixation, spending ~250ms on each. Poor readers make more fixations, hold them longer, and regress more often than skilled readers. Phrase-sized chunks align with this natural fixation rhythm, reducing the work per glance (Lefton, Nagle & Johnson, 1979).</p>
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">
@@ -988,12 +981,12 @@ function Home() {
               </p>
               <p>
                 When a phrase boundary is missed, the eye doubles back to
-                re-read. Poor readers regress far more often than skilled ones.
-                Phrase-cueing reduces this backtracking: Magloire (2002) found
-                ~31% faster reading in eye-movement-tracked conditions,
-                consistent with fewer costly regressions. Lefton, Nagle &amp;
-                Johnson (1979) independently documented significantly more
-                regressions in poor readers compared to skilled ones.
+                re-read. Poor readers regress much more often than skilled
+                readers. Phrase-cueing reduces this backtracking: Magloire
+                (2002) found ~31% faster reading and fewer costly regressions.
+                Lefton, Nagle &amp; Johnson (1979) independently found
+                significantly more regressions in poor readers than skilled
+                readers.
               </p>
             </div>
           </div>
