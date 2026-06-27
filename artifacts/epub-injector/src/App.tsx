@@ -89,6 +89,38 @@ function Highlighter({ children }: { children: React.ReactNode }) {
   );
 }
 
+function SweepPhrase({
+  children,
+  index,
+  total,
+}: {
+  children: React.ReactNode;
+  index: number;
+  total: number;
+}) {
+  const cycle = 5.2;
+  const slot = cycle / total;
+  return (
+    <span className="relative inline-block align-baseline">
+      <span
+        aria-hidden="true"
+        className="phrase-sweep"
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundColor: "#FDF3C8",
+          borderRadius: "2px",
+          animationDelay: `${index * slot}s`,
+          zIndex: 0,
+        }}
+      />
+      <span className="relative" style={{ zIndex: 1, padding: "0 3px" }}>
+        {children}
+      </span>
+    </span>
+  );
+}
+
 function Home() {
   const heroRef = useRef<HTMLElement>(null);
   const [heroVisible, setHeroVisible] = useState(true);
@@ -116,29 +148,6 @@ function Home() {
   const [fallbackMsg, setFallbackMsg] = useState("");
   const [downloadUrl, setDownloadUrl] = useState("");
   const [downloadFilename, setDownloadFilename] = useState("");
-
-  const heroSentence =
-    "She wrote every morning by the window, while the city came slowly awake outside and the light changed.";
-  const [heroAfterText, setHeroAfterText] = useState(heroSentence);
-
-  // Fetch correctly-spaced hero After text on mount
-  useEffect(() => {
-    fetch("/api/preview", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        text: heroSentence,
-        mode: "pseudosyntactic",
-        language: "auto",
-        chunk_density: "balanced",
-      }),
-    })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.result) setHeroAfterText(data.result);
-      })
-      .catch(() => {});
-  }, []);
 
   // Fade chevron when hero scrolls out of view
   useEffect(() => {
@@ -322,6 +331,19 @@ function Home() {
           transform-origin: left center;
           animation: highlighterDraw 750ms ease-out 400ms both;
         }
+
+        @keyframes phraseHighlightSweep {
+          0%   { transform: scaleX(0); }
+          10%  { transform: scaleX(1); }
+          21%  { transform: scaleX(1); }
+          23%  { transform: scaleX(0); }
+          100% { transform: scaleX(0); }
+        }
+        .phrase-sweep {
+          transform: scaleX(0);
+          transform-origin: left center;
+          animation: phraseHighlightSweep 5.2s ease-out infinite;
+        }
       `}</style>
       {/* ── 1. Hero — full viewport ─────────────────────────────────────── */}
       <section
@@ -366,13 +388,21 @@ function Home() {
                 After
               </div>
               <p className="font-serif text-base md:text-xl leading-[2] text-foreground">
-                <span style={{backgroundColor:'#FDF3C8',borderRadius:'2px',padding:'0 3px'}}>She wrote every morning</span>
-                {' '}
-                <span style={{backgroundColor:'#FDF3C8',borderRadius:'2px',padding:'0 3px'}}>by the window,</span>
-                {' '}
-                <span style={{backgroundColor:'#FDF3C8',borderRadius:'2px',padding:'0 3px'}}>while the city came slowly awake outside</span>
-                {' '}
-                <span style={{backgroundColor:'#FDF3C8',borderRadius:'2px',padding:'0 3px'}}>and the light changed.</span>
+                <SweepPhrase index={0} total={4}>
+                  She wrote every morning
+                </SweepPhrase>
+                {" "}
+                <SweepPhrase index={1} total={4}>
+                  by the window,
+                </SweepPhrase>
+                {" "}
+                <SweepPhrase index={2} total={4}>
+                  while the city came slowly awake outside
+                </SweepPhrase>
+                {" "}
+                <SweepPhrase index={3} total={4}>
+                  and the light changed.
+                </SweepPhrase>
               </p>
             </div>
           </div>
