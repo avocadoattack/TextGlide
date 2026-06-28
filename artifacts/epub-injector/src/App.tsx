@@ -33,6 +33,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import NotFound from "@/pages/not-found";
 import { applyNaturalScan } from "./naturalScan";
+import 'altcha';
 
 // ── TextGlide site-wide reading toggle ──────────────────────────────────────
 const TextGlideCtx = createContext<{
@@ -449,6 +450,20 @@ function Home() {
   const [downloadUrl, setDownloadUrl] = useState("");
   const [downloadFilename, setDownloadFilename] = useState("");
 
+  const [altchaToken, setAltchaToken] = useState("");
+  const altchaRef = useRef<HTMLElement & { reset?: () => void }>(null);
+
+  useEffect(() => {
+    const el = altchaRef.current;
+    if (!el) return;
+    const handler = (e: Event) => {
+      const token = (e as CustomEvent<{ token: string }>).detail?.token ?? "";
+      setAltchaToken(token);
+    };
+    el.addEventListener("solve", handler);
+    return () => el.removeEventListener("solve", handler);
+  }, []);
+
   const [gapsOpen, setGapsOpen] = useState(false);
   useEffect(() => {
     const id = setTimeout(() => setGapsOpen(true), 1700);
@@ -549,6 +564,7 @@ function Home() {
     formData.append("mode", state.mode);
     formData.append("language", state.language);
     formData.append("chunk_density", state.readingSupport);
+    formData.append("altcha", altchaToken);
 
     try {
       const res = await fetch("/api/process", {
@@ -557,6 +573,9 @@ function Home() {
       });
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
+        if (res.status === 403) {
+          throw new Error("Verification failed. Please refresh the page and try again.");
+        }
         throw new Error((json as any).error || "Processing failed");
       }
       const fallback = res.headers.get("X-Fallback-Warning");
@@ -573,6 +592,8 @@ function Home() {
       setDownloadUrl(url);
       setDownloadFilename(filename);
       setStatus("success");
+      setAltchaToken("");
+      altchaRef.current?.reset?.();
     } catch (err: unknown) {
       setStatus("error");
       setErrorMsg(
@@ -1276,16 +1297,31 @@ function Home() {
                 For best results, set your e-reader to <strong className="text-muted-foreground">left-aligned (ragged-right)</strong> text. Justified text stretches normal spaces and can cancel out the phrase spacing.
               </p>
 
+              {/* Altcha invisible PoW widget */}
+              <altcha-widget
+                ref={altchaRef as React.RefObject<HTMLElement>}
+                challengeurl="/api/altcha"
+                auto="onload"
+                display="invisible"
+                name="altcha"
+                style={{ display: "none" }}
+              />
+
               {/* Process button */}
               <Button
                 className="w-full md:max-w-xs h-14 text-lg font-medium shadow-md rounded-xl"
                 size="lg"
-                disabled={!file || status === "processing"}
+                disabled={!file || status === "processing" || !altchaToken}
                 onClick={handleProcess}
                 data-testid="button-process"
               >
                 Process Book
               </Button>
+              {!altchaToken && (
+                <p style={{ fontSize: "12px", color: "#999", textAlign: "center", marginTop: "4px" }}>
+                  Verifying session… please wait.
+                </p>
+              )}
 
               {/* Status caption — appears below button during / after processing */}
               {status !== "idle" && (

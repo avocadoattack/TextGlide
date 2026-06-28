@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.11"
 dependencies = [
+    "altcha>=2.0.0",
     "beautifulsoup4>=4.15.0",
     "benepar>=0.2.0",
     "ebooklib>=0.20",

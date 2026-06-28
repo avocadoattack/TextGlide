@@ -14,6 +14,10 @@ import tempfile
 import traceback
 from pathlib import Path
 
+import altcha
+import secrets as _secrets
+from datetime import datetime, timezone, timedelta
+
 from flask import Flask, jsonify, request, send_file
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -24,6 +28,11 @@ from epub_processor import (
     preview_text,
     process_epub,
 )
+
+ALTCHA_HMAC_KEY = os.environ.get('ALTCHA_HMAC_KEY', '')
+if not ALTCHA_HMAC_KEY:
+    ALTCHA_HMAC_KEY = _secrets.token_hex(32)
+    print("WARNING: ALTCHA_HMAC_KEY not set in environment — using ephemeral key. Set this secret for production stability.")
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024  # 50 MB
@@ -73,6 +82,23 @@ def _safe(value: str, allowed: set, default: str) -> str:
 # Healthz
 # ---------------------------------------------------------------------------
 
+@app.route("/api/altcha", methods=["GET"])
+def altcha_challenge():
+    options = altcha.ChallengeOptions(
+        hmac_key=ALTCHA_HMAC_KEY,
+        max_number=100000,
+        expires=datetime.now(timezone.utc) + timedelta(minutes=10)
+    )
+    challenge = altcha.create_challenge(options)
+    return jsonify({
+        'algorithm': challenge.algorithm,
+        'challenge': challenge.challenge,
+        'maxnumber': challenge.maxnumber,
+        'salt': challenge.salt,
+        'signature': challenge.signature,
+    })
+
+
 @app.route("/api/healthz", methods=["GET", "OPTIONS"])
 def healthz():
     if request.method == "OPTIONS":
@@ -116,6 +142,16 @@ def preview():
 def process():
     if request.method == "OPTIONS":
         return "", 204
+
+    altcha_payload = request.form.get('altcha', '')
+    if not altcha_payload:
+        return jsonify({'error': 'Verification token missing. Please wait for the page to load fully and try again.'}), 403
+    try:
+        ok, err = altcha.verify_solution(altcha_payload, ALTCHA_HMAC_KEY, check_expires=True)
+        if not ok:
+            return jsonify({'error': 'Verification failed. Please refresh and try again.'}), 403
+    except Exception:
+        return jsonify({'error': 'Verification error. Please refresh and try again.'}), 403
 
     if "file" not in request.files:
         return jsonify({"error": "No file uploaded."}), 400
