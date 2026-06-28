@@ -1475,6 +1475,7 @@ function Home() {
                 gap: 24px !important;
               }
               .footer-center { text-align: center; }
+              .footer-right { margin-top: 12px; }
             }
             .bmc-btn:hover { background: #e6c800 !important; }
             .gh-icon:hover svg { color: #111 !important; }
@@ -1534,7 +1535,7 @@ function Home() {
           </div>
 
           {/* Right: Links */}
-          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <div className="footer-right" style={{ display: "flex", alignItems: "center", gap: "16px" }}>
             <a
               href="https://github.com/avocadoattack/textglide"
               target="_blank"
