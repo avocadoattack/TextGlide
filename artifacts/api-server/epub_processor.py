@@ -6,8 +6,8 @@ comprehension. Only text nodes are ever modified — tags, attributes, scripts,
 styles, and intra-word characters are never touched.
 
 Chunking modes:
-  Quick Pass (pseudosyntactic) — POS-tag heuristic (spaCy); keyword fallback if unavailable.
-  Grammar Parser (syntactic)  — Full dependency-parse (spaCy); keyword fallback if unavailable.
+  Natural Scan — POS-tag heuristic (spaCy); keyword fallback if unavailable.
+  Grammar Parse  — Full dependency-parse (spaCy); keyword fallback if unavailable.
 
 Reading Support tiers (controls break frequency):
   Balanced — conjunctions + prepositions; min 14 chars per chunk.
@@ -117,7 +117,7 @@ def _load_model(lang: str) -> _ModelState:
 
 
 # ---------------------------------------------------------------------------
-# Glued-unit detection (positions where we must NOT break) — Grammar Parser mode
+# Glued-unit detection (positions where we must NOT break) — Grammar Parse mode
 # ---------------------------------------------------------------------------
 
 def _forbidden_breaks(tokens: list) -> set[int]:
@@ -235,7 +235,7 @@ def _forced_breaks_punct(sent, forbidden: set[int]) -> set[int]:
 
 
 # ---------------------------------------------------------------------------
-# POS-based chunker (Quick Pass / pseudosyntactic mode)
+# POS-based chunker (Natural Scan / pseudosyntactic mode)
 # ---------------------------------------------------------------------------
 
 # POS tags that signal a new phrase boundary, by density level
@@ -246,7 +246,7 @@ _PSEUDO_PRON_L3 = frozenset({"who", "which", "whom"})  # relative pronouns (stro
 
 def _breaks_pos(sent, level: int) -> set[int]:
     """
-    POS-based break candidates for Quick Pass mode.
+    POS-based break candidates for Natural Scan mode.
     No dependency tree consulted — only POS tags and the token's position.
     """
     trigger_pos = _PSEUDO_POS_L2 if level >= 2 else _PSEUDO_POS_L1
@@ -265,7 +265,7 @@ def _patch_pseudosyntactic(
     text: str, chunk_density: str, lang: str
 ) -> tuple[str, str]:
     """
-    POS-heuristic chunker for Quick Pass mode.
+    POS-heuristic chunker for Natural Scan mode.
     Returns (patched_text, mode_used).
     mode_used: 'pseudosyntactic' on success, 'keyword_fallback' if spaCy unavailable.
     """
@@ -296,7 +296,7 @@ def _patch_pseudosyntactic(
 
 
 # ---------------------------------------------------------------------------
-# Dependency-parse chunker (Grammar Parser / syntactic mode)
+# Dependency-parse chunker (Grammar Parse / syntactic mode)
 # ---------------------------------------------------------------------------
 
 # dep labels that trigger a break at ALL density levels
@@ -316,7 +316,7 @@ _CLAUSE_DEPS = frozenset({"advcl", "relcl", "ccomp", "xcomp", "conj"})
 
 def _breaks_dep(sent, level: int, forbidden: set[int]) -> set[int]:
     """
-    Dependency-parse break candidates for Grammar Parser mode.
+    Dependency-parse break candidates for Grammar Parse mode.
 
     For clause-introducing deps (advcl, relcl, ccomp, xcomp, conj) the break
     lands at tok.left_edge — the leftmost token of the entire subtree — so the
@@ -404,7 +404,7 @@ def _keyword_fallback(text: str, density: str, lang: str) -> str:
 
 def _patch_syntactic(text: str, chunk_density: str, lang: str) -> tuple[str, str]:
     """
-    Full dependency-parse chunker for Grammar Parser mode.
+    Full dependency-parse chunker for Grammar Parse mode.
     Returns (patched_text, mode_used).
     mode_used: 'syntactic' on success, 'keyword_fallback' if spaCy unavailable.
     """

@@ -2,7 +2,7 @@
 TextGlide — algorithm calibration (single source of truth).
 
 All thresholds, gap characters, and trigger sets live here.
-Both the Quick Pass (pseudosyntactic) and Grammar Parser (syntactic) engines
+Both the Natural Scan and Grammar Parse engines
 read their parameters from this module.
 """
 

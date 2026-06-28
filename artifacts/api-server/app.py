@@ -161,7 +161,7 @@ def process():
 
 
 def _fallback_message(requested: str, actual: str) -> str:
-    names = {"pseudosyntactic": "Quick Pass", "syntactic": "Grammar Parser"}
+    names = {"pseudosyntactic": "Natural Scan", "syntactic": "Grammar Parse"}
     requested_label = names.get(requested, requested.capitalize())
     if actual == "keyword_fallback":
         return (

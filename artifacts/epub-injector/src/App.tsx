@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, ChangeEvent } from "react";
+import { useState, useEffect, useCallback, useRef, createContext, useContext, ChangeEvent } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -32,6 +32,22 @@ import {
 } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import NotFound from "@/pages/not-found";
+import { applyNaturalScan } from "./naturalScan";
+
+// ── TextGlide site-wide reading toggle ──────────────────────────────────────
+const TextGlideCtx = createContext<{
+  enabled: boolean;
+  toggle: () => void;
+}>({ enabled: true, toggle: () => {} });
+
+function useTextGlide() { return useContext(TextGlideCtx); }
+
+/** Wraps a prose string and optionally applies Natural Scan spacing. */
+function Spaced({ children }: { children: string }) {
+  const { enabled } = useTextGlide();
+  if (!enabled || typeof children !== "string") return <>{children}</>;
+  return <>{applyNaturalScan(children)}</>;
+}
 
 const queryClient = new QueryClient();
 
@@ -133,6 +149,7 @@ const NAV_ITEMS = [
 ] as const;
 
 function NavRail() {
+  const { enabled: tgOn, toggle: tgToggle } = useTextGlide();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -235,6 +252,28 @@ function NavRail() {
             </div>
           );
         })}
+        <div style={{ width: "24px", height: "1px", background: "#E8E4DC", margin: "8px auto 4px" }} />
+        <button
+          onClick={tgToggle}
+          title={tgOn ? "Turn off TextGlide view" : "Turn on TextGlide view"}
+          aria-label={tgOn ? "Turn off TextGlide view" : "Turn on TextGlide view"}
+          style={{
+            width: 14,
+            height: 14,
+            borderRadius: "3px",
+            background: tgOn ? "#C0533A" : "#ccc",
+            border: "none",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            margin: "4px auto 6px",
+            transition: "background 150ms",
+            flexShrink: 0,
+          }}
+        >
+          <span style={{ fontSize: 8, color: "#fff", lineHeight: 1, userSelect: "none" }}>TG</span>
+        </button>
       </nav>
 
       <button
@@ -331,6 +370,47 @@ function NavRail() {
                 {label}
               </button>
             ))}
+            <div style={{ borderTop: "1px solid #E8E4DC", margin: "12px 24px 0", paddingTop: "16px" }}>
+              <button
+                onClick={tgToggle}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontSize: 15,
+                  color: "#3D2F1F",
+                  padding: "4px 0",
+                  width: "100%",
+                }}
+              >
+                <span style={{
+                  display: "inline-block",
+                  width: 32,
+                  height: 18,
+                  borderRadius: 9,
+                  background: tgOn ? "#C0533A" : "#ccc",
+                  position: "relative",
+                  flexShrink: 0,
+                  transition: "background 200ms",
+                }}>
+                  <span style={{
+                    position: "absolute",
+                    top: 3,
+                    left: tgOn ? 17 : 3,
+                    width: 12,
+                    height: 12,
+                    borderRadius: "50%",
+                    background: "#fff",
+                    transition: "left 200ms ease",
+                  }} />
+                </span>
+                TextGlide view
+              </button>
+            </div>
           </nav>
         </>
       )}
@@ -347,6 +427,9 @@ function Home() {
     language: "auto",
     readingSupport: "balanced" as ReadingSupport,
   });
+
+  const [textGlideOn, setTextGlideOn] = useState(true);
+  const toggleTextGlide = useCallback(() => setTextGlideOn(v => !v), []);
 
   const [previewText, setPreviewText] = useState(defaultPreviewText);
   const [previewResult, setPreviewResult] = useState("");
@@ -551,10 +634,65 @@ function Home() {
     : false;
 
   return (
+    <TextGlideCtx.Provider value={{ enabled: textGlideOn, toggle: toggleTextGlide }}>
     <div
       className="min-h-screen pb-20 selection:bg-primary/20"
       data-testid="page-home"
     >
+      {/* Desktop TextGlide toggle — top right */}
+      <div
+        className="nav-rail-desktop"
+        style={{
+          position: "fixed",
+          top: 20,
+          right: 24,
+          zIndex: 1000,
+        }}
+      >
+        <button
+          onClick={toggleTextGlide}
+          title={textGlideOn ? "Turn off TextGlide reading view" : "Turn on TextGlide reading view"}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "7px",
+            background: textGlideOn ? "#2a2016" : "#FFFFFF",
+            color: textGlideOn ? "#f5f0e8" : "#888",
+            border: textGlideOn ? "none" : "1px solid #E0DDD8",
+            borderRadius: "20px",
+            padding: "6px 12px 6px 8px",
+            fontSize: "12px",
+            fontFamily: "inherit",
+            cursor: "pointer",
+            boxShadow: "0 2px 10px rgba(60,40,20,0.10)",
+            transition: "all 200ms ease",
+            letterSpacing: "0.01em",
+          }}
+        >
+          <span style={{
+            display: "inline-block",
+            width: 28,
+            height: 16,
+            borderRadius: 8,
+            background: textGlideOn ? "#C0533A" : "#ccc",
+            position: "relative",
+            flexShrink: 0,
+            transition: "background 200ms",
+          }}>
+            <span style={{
+              position: "absolute",
+              top: 2,
+              left: textGlideOn ? 14 : 2,
+              width: 12,
+              height: 12,
+              borderRadius: "50%",
+              background: "#fff",
+              transition: "left 200ms ease",
+            }} />
+          </span>
+          TextGlide view
+        </button>
+      </div>
       <NavRail />
       {/* keyframes */}
       <style>{`
@@ -638,6 +776,11 @@ function Home() {
         }
         .bmc-toast-enter { animation: bmcToastIn 250ms ease forwards; }
         .bmc-toast-leave { animation: bmcToastOut 200ms ease forwards; }
+        @keyframes tgTogglePop {
+          0%   { transform: scale(1); }
+          50%  { transform: scale(0.94); }
+          100% { transform: scale(1); }
+        }
         @media (min-width: 768px) {
           .nav-rail-mobile { display: none !important; }
         }
@@ -688,7 +831,7 @@ function Home() {
           <p
             className="text-base sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
             data-testid="hero-subhead"
-          >TextGlide adds subtle spacing at the natural phrase boundaries in your EPUBs, so your eyes group words into meaningful phrases the way fluent readers naturally do.</p>
+          ><Spaced>TextGlide adds subtle spacing at the natural phrase boundaries in your EPUBs, so your eyes group words into meaningful phrases the way fluent readers naturally do.</Spaced></p>
 
           {/* Before / After cards */}
           <div
@@ -1247,7 +1390,7 @@ function Home() {
                   Upload a DRM-free EPUB
                 </strong>
               </div>
-              <p className="text-muted-foreground leading-relaxed text-sm">If your book has DRM, you'll need to legally remove it. TextGlide only works with DRM-free files and currently supports only EPUBs.</p>
+              <p className="text-muted-foreground leading-relaxed text-sm"><Spaced>If your book has DRM, you'll need to legally remove it. TextGlide only works with DRM-free files and currently supports only EPUBs.</Spaced></p>
             </div>
             <div className="bg-muted/30 border border-border/40 rounded-xl p-6 space-y-3">
               <div className="flex items-center gap-3">
@@ -1258,7 +1401,7 @@ function Home() {
                   Pick a mode and adjust the sliders
                 </strong>
               </div>
-              <p className="text-muted-foreground leading-relaxed text-sm">Try the live preview to find your preferred mode. Natural Scan relies on fast pattern detection, while Grammar Parse employs full grammar analysis.</p>
+              <p className="text-muted-foreground leading-relaxed text-sm"><Spaced>Try the live preview to find your preferred mode. Natural Scan relies on fast pattern detection, while Grammar Parse employs full grammar analysis.</Spaced></p>
             </div>
             <div className="bg-muted/30 border border-border/40 rounded-xl p-6 space-y-3">
               <div className="flex items-center gap-3">
@@ -1270,9 +1413,9 @@ function Home() {
                 </strong>
               </div>
               <p className="text-muted-foreground leading-relaxed text-sm">
-                Transfer via USB cable or use the Send to Kindle app. Your
+                <Spaced>Transfer via USB cable or use the Send to Kindle app. Your
                 original file is untouched; you can always reprocess with
-                different settings.
+                different settings.</Spaced>
               </p>
             </div>
           </div>
@@ -1291,44 +1434,44 @@ function Home() {
           <div className="grid md:grid-cols-2 gap-x-12 gap-y-5 text-muted-foreground leading-relaxed">
             <div className="space-y-1">
               <p className="font-medium text-foreground">Chunking</p>
-              <p>Fluent readers don't read word by word. They group words into phrases and take in each group at a glance. TextGlide subtly surfaces these natural word groupings in your text, so your eyes and brain work less.</p>
+              <p><Spaced>Fluent readers don't read word by word. They group words into phrases and take in each group at a glance. TextGlide subtly surfaces these natural word groupings in your text, so your eyes and brain work less.</Spaced></p>
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">
                 Syntactically cued formatting
               </p>
-              <p>Adding spacing to show phrase breaks helps readers. North & Jenkins first studied this in 1951 and found that readers were faster and understood more when phrase structure was cued. Many later studies have confirmed this.</p>
+              <p><Spaced>Adding spacing to show phrase breaks helps readers. North & Jenkins first studied this in 1951 and found that readers were faster and understood more when phrase structure was cued. Many later studies have confirmed this.</Spaced></p>
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">Pseudosyntax</p>
-              <p>Before you consciously parse a sentence, your brain makes a fast, rough guess at its structure from statistical cues. Subtle spacing supports that first-pass guess, making the text easier to read.</p>
+              <p><Spaced>Before you consciously parse a sentence, your brain makes a fast, rough guess at its structure from statistical cues. Subtle spacing supports that first-pass guess, making the text easier to read.</Spaced></p>
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">
                 Cognitive load and cognitive fluency
               </p>
               <p>
-                Pre-grouping words lowers the working-memory cost of reading
+                <Spaced>Pre-grouping words lowers the working-memory cost of reading
                 (load) and raises the felt ease of processing (fluency), which
-                tracks with comprehension and stamina, especially under fatigue.
+                tracks with comprehension and stamina, especially under fatigue.</Spaced>
               </p>
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">Eye-fixation span</p>
-              <p>The eye takes in roughly 1–2 words per fixation, spending ~250ms on each. Poor readers make more fixations, hold them longer, and regress more often than skilled readers. Phrase-sized chunks align with this natural fixation rhythm, reducing the work per glance (Lefton, Nagle & Johnson, 1979).</p>
+              <p><Spaced>The eye takes in roughly 1–2 words per fixation, spending ~250ms on each. Poor readers make more fixations, hold them longer, and regress more often than skilled readers. Phrase-sized chunks align with this natural fixation rhythm, reducing the work per glance (Lefton, Nagle & Johnson, 1979).</Spaced></p>
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">
                 Regression &amp; backtracking
               </p>
               <p>
-                When a phrase boundary is missed, the eye doubles back to
+                <Spaced>When a phrase boundary is missed, the eye doubles back to
                 re-read. Poor readers regress much more often than skilled
                 readers. Phrase-cueing reduces this backtracking: Magloire
                 (2002) found ~31% faster reading and fewer costly regressions.
                 Lefton, Nagle &amp; Johnson (1979) independently found
                 significantly more regressions in poor readers than skilled
-                readers.
+                readers.</Spaced>
               </p>
             </div>
           </div>
@@ -1340,15 +1483,15 @@ function Home() {
             <div className="grid md:grid-cols-2 gap-6">
               <div className="bg-muted/30 border border-border/40 rounded-xl p-5 space-y-2">
                 <p className="font-medium text-foreground">Natural Scan</p>
-                <p className="text-muted-foreground text-sm leading-relaxed">A fast, statistical read of where phrases begin, from word-pattern cues rather than full grammar. Mirrors the intuitive first pass your eyes already make. In head-to-head research, this rough, heuristic method actually beat full-grammar parsing and even a prosodic parse for readability, which is why it's the default.</p>
+                <p className="text-muted-foreground text-sm leading-relaxed"><Spaced>A fast, statistical read of where phrases begin, from word-pattern cues rather than full grammar. Mirrors the intuitive first pass your eyes already make. In head-to-head research, this rough, heuristic method actually beat full-grammar parsing and even a prosodic parse for readability, which is why it's the default.</Spaced></p>
               </div>
               <div className="bg-muted/30 border border-border/40 rounded-xl p-5 space-y-2">
                 <p className="font-medium text-foreground">Grammar Parse</p>
-                <p className="text-muted-foreground text-sm leading-relaxed">A complete grammatical analysis of each sentence before inserting gaps. Technically, it's more linguistically precise, but evidence shows that full-phrase-structure parsing was less effective than a heuristic-based phrase segmenter. Kept as a comparison option for research and testing purposes.</p>
+                <p className="text-muted-foreground text-sm leading-relaxed"><Spaced>A complete grammatical analysis of each sentence before inserting gaps. Technically, it's more linguistically precise, but evidence shows that full-phrase-structure parsing was less effective than a heuristic-based phrase segmenter. Kept as a comparison option for research and testing purposes.</Spaced></p>
               </div>
             </div>
             <p className="text-muted-foreground text-sm leading-relaxed text-center">
-              <strong className="text-foreground">Why both?</strong> They trade coverage against precision differently. We expect to settle on one single mode soon.
+              <strong className="text-foreground">Why both?</strong> <Spaced>They trade coverage against precision differently. We expect to settle on one single mode soon.</Spaced>
             </p>
           </div>
         </section>
@@ -1400,7 +1543,7 @@ function Home() {
                   {q}
                 </dt>
                 <dd className="text-muted-foreground leading-relaxed text-sm">
-                  {a}
+                  <Spaced>{a}</Spaced>
                 </dd>
               </div>
             ))}
@@ -1429,7 +1572,7 @@ function Home() {
             <li>Walker et al. (2005): 40.0%* comprehension gain — Visual-Syntactic Text Formatting</li>
           </ul>
           <p className="text-xs text-muted-foreground/70 leading-relaxed pt-2 border-t border-border/30">
-            These results come from studies over many years and use different methods, with some based on small groups. The trend is clear: cueing phrases make reading feel easier, but the effect size varies, and results can differ from person to person.
+            <Spaced>These results come from studies over many years and use different methods, with some based on small groups. The trend is clear: cueing phrases make reading feel easier, but the effect size varies, and results can differ from person to person.</Spaced>
           </p>
         </section>
 
@@ -1440,7 +1583,7 @@ function Home() {
           data-testid="section-why"
         >
           <h3 className="font-serif text-2xl text-foreground">Why it exists</h3>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">Fluent readers don't read one word at a time; they take in meaningful phrases per glance. TextGlide swiftly rebuilds your EPUBs to gently cue those phrase groups with carefully calibrated extra spacing: a free, open-source tool that works on any e-reader that accepts EPUBs.</p>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed"><Spaced>Fluent readers don't read one word at a time; they take in meaningful phrases per glance. TextGlide swiftly rebuilds your EPUBs to gently cue those phrase groups with carefully calibrated extra spacing: a free, open-source tool that works on any e-reader that accepts EPUBs.</Spaced></p>
         </section>
       </main>
       {/* Footer */}
@@ -1644,6 +1787,7 @@ function Home() {
         </div>
       )}
     </div>
+    </TextGlideCtx.Provider>
   );
 }
 
