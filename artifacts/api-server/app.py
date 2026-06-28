@@ -15,6 +15,8 @@ import traceback
 from pathlib import Path
 
 from flask import Flask, jsonify, request, send_file
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 from epub_processor import (
     detect_language,
@@ -25,6 +27,18 @@ from epub_processor import (
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024  # 50 MB
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=[],
+    storage_uri="memory://",
+)
+
+
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    return jsonify({"error": "Too many requests. Please wait before trying again."}), 429
 
 
 # ---------------------------------------------------------------------------
@@ -71,6 +85,7 @@ def healthz():
 # ---------------------------------------------------------------------------
 
 @app.route("/api/preview", methods=["POST", "OPTIONS"])
+@limiter.limit("60 per minute")
 def preview():
     if request.method == "OPTIONS":
         return "", 204
@@ -97,6 +112,7 @@ def preview():
 # ---------------------------------------------------------------------------
 
 @app.route("/api/process", methods=["POST", "OPTIONS"])
+@limiter.limit("5 per hour")
 def process():
     if request.method == "OPTIONS":
         return "", 204

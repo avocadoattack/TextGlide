@@ -1574,6 +1574,9 @@ function Home() {
           <p className="text-xs text-muted-foreground/70 leading-relaxed pt-2 border-t border-border/30">
             <Spaced>These results come from studies over many years and use different methods, with some based on small groups. The trend is clear: cueing phrases make reading feel easier, but the effect size varies, and results can differ from person to person.</Spaced>
           </p>
+          <p style={{ fontSize: "12px", color: "#888", marginTop: "8px", borderTop: "1px solid #E8E4DC", paddingTop: "8px", lineHeight: "1.5" }}>
+            * Statistically significant result (p &lt; .05). Approximately half of all studies in this corpus found no significant effect — this is stated honestly in the FAQ.
+          </p>
         </section>
 
         {/* 6. Why it exists */}
@@ -1674,6 +1677,14 @@ function Home() {
                 alt="Open Source Love"
                 style={{ height: "22px", width: "auto", display: "block" }}
               />
+            </a>
+            <a
+              href="https://github.com/avocadoattack/textglide/blob/main/CONTRIBUTING.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontSize: "12px", color: "#999", marginTop: "6px", display: "inline-block", textDecoration: "none" }}
+            >
+              Contributions welcome
             </a>
           </div>
 
