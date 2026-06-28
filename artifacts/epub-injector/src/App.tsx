@@ -1461,7 +1461,7 @@ function Home() {
             justifyContent: "space-between",
             flexWrap: "wrap",
             gap: "12px",
-            padding: "32px 40px",
+            padding: "40px 48px",
           }}
           className="footer-inner"
         >
@@ -1471,7 +1471,7 @@ function Home() {
                 flex-direction: column !important;
                 align-items: center !important;
                 justify-content: center !important;
-                padding: 28px 20px !important;
+                padding: 32px 24px !important;
                 gap: 16px !important;
               }
               .footer-center { text-align: center; }
@@ -1486,11 +1486,11 @@ function Home() {
             <img
               src="/Avocado-Attack-Avatar.svg"
               alt="Mr. Avocado avatar"
-              width={32}
-              height={32}
+              width={40}
+              height={40}
               style={{ borderRadius: "50%", flexShrink: 0 }}
             />
-            <span style={{ fontSize: "13px", color: "#888", fontFamily: "inherit" }}>
+            <span style={{ fontSize: "14px", color: "#888", fontFamily: "inherit" }}>
               Created by Mr. Avocado
             </span>
           </div>
@@ -1503,7 +1503,7 @@ function Home() {
               flexDirection: "column",
               alignItems: "center",
               gap: "3px",
-              fontSize: "12px",
+              fontSize: "13px",
               color: "#999",
               lineHeight: "1.5",
             }}
@@ -1519,9 +1519,21 @@ function Home() {
             >
               MIT License
             </a>
-            <span style={{ color: "#bbb", fontSize: "11px" }}>
+            <span style={{ color: "#bbb", fontSize: "13px" }}>
               TextGlide — a reading aid, not a medical device.
             </span>
+            <a
+              href="https://github.com/avocadoattack/textglide"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: "inline-block", marginTop: "8px", lineHeight: 0, border: "none" }}
+            >
+              <img
+                src="https://firstcontributions.github.io/open-source-badges/badges/open-source-v1/open-source.svg"
+                alt="Open Source Love"
+                style={{ height: "22px", width: "auto", display: "block" }}
+              />
+            </a>
           </div>
 
           {/* Right: Links */}
@@ -1535,8 +1547,8 @@ function Home() {
               style={{ color: "#999", display: "flex", alignItems: "center", lineHeight: 0 }}
             >
               <svg
-                width="20"
-                height="20"
+                width="22"
+                height="22"
                 viewBox="0 0 98 96"
                 xmlns="http://www.w3.org/2000/svg"
                 aria-hidden="true"
@@ -1559,10 +1571,10 @@ function Home() {
                 display: "inline-block",
                 background: "#FFDD00",
                 color: "#333",
-                fontSize: "13px",
+                fontSize: "14px",
                 fontWeight: 500,
                 borderRadius: "20px",
-                padding: "6px 14px",
+                padding: "8px 16px",
                 textDecoration: "none",
                 fontFamily: "inherit",
                 transition: "background 150ms",
