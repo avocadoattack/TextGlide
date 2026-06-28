@@ -408,7 +408,7 @@ function NavRail() {
                     transition: "left 200ms ease",
                   }} />
                 </span>
-                TextGlide view
+                {tgOn ? "TextGlide On" : "TextGlide Off"}
               </button>
             </div>
           </nav>
