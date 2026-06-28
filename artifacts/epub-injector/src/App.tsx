@@ -1471,8 +1471,8 @@ function Home() {
                 flex-direction: column !important;
                 align-items: center !important;
                 justify-content: center !important;
-                padding: 28px 24px !important;
-                gap: 16px !important;
+                padding: 40px 24px !important;
+                gap: 24px !important;
               }
               .footer-center { text-align: center; }
             }
