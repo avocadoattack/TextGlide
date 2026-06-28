@@ -1,0 +1,363 @@
+Make the following changes. These are two independent concerns batched together.
+
+---
+
+## CHANGE 1: Rename mode labels throughout the entire codebase
+
+In every file across the codebase, find and replace the following stale internal labels. Do NOT change any logic, variable names, API parameter values ("pseudosyntactic", "syntactic"), or data flow — only update human-readable strings, comments, and docstrings:
+
+- "Quick Pass (pseudosyntactic)" → "Natural Scan"
+- "Quick Pass" → "Natural Scan" (wherever it appears as a standalone label)
+- "Grammar Parser (syntactic)" → "Grammar Parse"
+- "Grammar Parser" → "Grammar Parse" (wherever it appears as a standalone label)
+
+Apply this to: textglide_config.py, any Python backend files, App.tsx, any other .py or .tsx/.ts/.js files in the project. Update comments and docstrings only — never change the actual string values "pseudosyntactic" or "syntactic" used in API calls, conditionals, or data objects.
+
+---
+
+## CHANGE 2: Full-site TextGlide reading toggle
+
+### Overview
+Add a client-side Natural Scan phrase-spacing engine in JavaScript that applies U+2009 thin-space gaps to all prose text on the website. A toggle lets users switch it on or off. Default on page load: ON.
+
+Exclusions — do NOT apply spacing to:
+- The hero headline ("Read in phrases, not word by word.")
+- The hero Before card text
+- The hero After card (already has hardcoded gap-spans)
+- The live preview textarea (id="preview-text") and its output
+- The nav rail labels and tooltips
+- All footer elements
+
+---
+
+### Step 1: Create textglide_config.js
+
+Create a new file at artifacts/epub-injector/src/textglide_config.js with this exact content:
+
+```js
+/**
+ * TextGlide — JS algorithm constants (Natural Scan only).
+ *
+ * SYNC WITH: textglide_config.py — Natural Scan constants only.
+ * Last synced: 2026-06-28
+ *
+ * If BALANCED_MIN_CHARS, STRONG_MIN_CHARS, MIN_PHRASE_WORDS, GAP_CHAR,
+ * TRIGGER_CCONJ, TRIGGER_SCONJ, or TRIGGER_ADP change in the Python file,
+ * update the matching values here immediately.
+ *
+ * Grammar Parse mode is NOT implemented here — it requires spaCy and
+ * remains Python-only. This file powers the website reading toggle only.
+ */
+
+export const GAP_CHAR = '\u2009'; // THIN SPACE — calibrated per Bever et al. 1992
+
+export const BALANCED_MIN_CHARS = 14; // synced with textglide_config.py
+export const STRONG_MIN_CHARS   = 10; // synced with textglide_config.py
+export const MIN_PHRASE_WORDS   = 3;  // synced with textglide_config.py
+
+// Natural Scan trigger words by POS category.
+// Keep in sync with the Python pseudosyntactic engine's trigger sets.
+export const TRIGGER_CCONJ = new Set([
+  'and', 'but', 'or', 'nor', 'yet', 'so',
+]);
+
+export const TRIGGER_SCONJ = new Set([
+  'because', 'although', 'while', 'when', 'if', 'since', 'though',
+  'unless', 'until', 'after', 'before', 'as', 'whereas', 'whether',
+  'once', 'even',
+]);
+
+export const TRIGGER_ADP = new Set([
+  'in', 'on', 'at', 'to', 'with', 'by', 'from', 'of', 'about',
+  'through', 'between', 'into', 'during', 'without', 'within', 'along',
+  'across', 'behind', 'beyond', 'except', 'up', 'out', 'around',
+  'down', 'off', 'above', 'near', 'over', 'under', 'against', 'among',
+  'throughout', 'despite', 'towards', 'toward', 'upon', 'per',
+]);
+
+export const ALL_TRIGGERS = new Set([
+  ...TRIGGER_CCONJ,
+  ...TRIGGER_SCONJ,
+  ...TRIGGER_ADP,
+]);
+```
+
+---
+
+### Step 2: Create the Natural Scan spacing function
+
+Create a new file at artifacts/epub-injector/src/naturalScan.ts with this content:
+
+```ts
+import { GAP_CHAR, BALANCED_MIN_CHARS, MIN_PHRASE_WORDS, ALL_TRIGGERS } from './textglide_config.js';
+
+/**
+ * Apply Natural Scan phrase spacing to a plain text string.
+ * Returns a new string with U+2009 thin-space gaps inserted at phrase boundaries.
+ * Always uses Balanced density (BALANCED_MIN_CHARS = 14).
+ *
+ * Algorithm mirrors the Python pseudosyntactic engine in epub_processor.py.
+ * Sync any logic changes with that file.
+ */
+export function applyNaturalScan(text: string): string {
+  if (!text || text.trim().length === 0) return text;
+
+  // Split on whitespace, preserving tokens with their trailing punctuation.
+  const rawTokens = text.split(/(\s+)/);
+  const tokens: string[] = [];
+  const spaces: string[] = [];
+
+  for (let i = 0; i < rawTokens.length; i++) {
+    if (i % 2 === 0) tokens.push(rawTokens[i]);
+    else spaces.push(rawTokens[i]);
+  }
+
+  const result: string[] = [];
+  let chunkCharCount = 0;
+  let chunkWordCount = 0;
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+    const space = spaces[i] ?? '';
+    const word = token.replace(/^[^\w]+|[^\w]+$/g, '').toLowerCase();
+    const isTrigger = ALL_TRIGGERS.has(word);
+
+    if (
+      isTrigger &&
+      chunkCharCount >= BALANCED_MIN_CHARS &&
+      chunkWordCount >= MIN_PHRASE_WORDS &&
+      i > 0
+    ) {
+      // Insert gap before this trigger word
+      result.push(GAP_CHAR + token + space);
+      chunkCharCount = token.length;
+      chunkWordCount = 1;
+    } else {
+      result.push(token + space);
+      chunkCharCount += token.length + space.length;
+      chunkWordCount += 1;
+    }
+  }
+
+  return result.join('');
+}
+```
+
+---
+
+### Step 3: Add a TextGlide toggle context
+
+In App.tsx, add the following near the top of the file, after all existing imports:
+
+```tsx
+import { applyNaturalScan } from './naturalScan';
+
+// ── TextGlide site-wide reading toggle ──────────────────────────────────────
+const TextGlideCtx = React.createContext<{
+  enabled: boolean;
+  toggle: () => void;
+}>({ enabled: true, toggle: () => {} });
+
+function useTextGlide() { return React.useContext(TextGlideCtx); }
+
+/** Wraps a prose string and optionally applies Natural Scan spacing. */
+function Spaced({ children }: { children: string }) {
+  const { enabled } = useTextGlide();
+  if (!enabled || typeof children !== 'string') return <>{children}</>;
+  return <>{applyNaturalScan(children)}</>;
+}
+```
+
+In the Home() function, add this state near the top (after existing useState declarations):
+
+```tsx
+const [textGlideOn, setTextGlideOn] = useState(true);
+const toggleTextGlide = useCallback(() => setTextGlideOn(v => !v), []);
+```
+
+Wrap the entire return value of Home() in the context provider. The outermost div with className="min-h-screen pb-20..." should become:
+
+```tsx
+<TextGlideCtx.Provider value={{ enabled: textGlideOn, toggle: toggleTextGlide }}>
+  <div className="min-h-screen pb-20 selection:bg-primary/20" data-testid="page-home">
+    {/* ... all existing content unchanged ... */}
+  </div>
+</TextGlideCtx.Provider>
+```
+
+---
+
+### Step 4: Add the toggle UI
+
+#### Desktop toggle pill (top-right corner)
+Add this component just after the opening of the outermost div (before NavRail), visible only on desktop (≥768px):
+
+```tsx
+{/* Desktop TextGlide toggle — top right */}
+<div
+  className="nav-rail-desktop"
+  style={{
+    position: 'fixed',
+    top: 20,
+    right: 24,
+    zIndex: 1000,
+  }}
+>
+  <button
+    onClick={toggleTextGlide}
+    title={textGlideOn ? 'Turn off TextGlide reading view' : 'Turn on TextGlide reading view'}
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '7px',
+      background: textGlideOn ? '#2a2016' : '#FFFFFF',
+      color: textGlideOn ? '#f5f0e8' : '#888',
+      border: textGlideOn ? 'none' : '1px solid #E0DDD8',
+      borderRadius: '20px',
+      padding: '6px 12px 6px 8px',
+      fontSize: '12px',
+      fontFamily: 'inherit',
+      cursor: 'pointer',
+      boxShadow: '0 2px 10px rgba(60,40,20,0.10)',
+      transition: 'all 200ms ease',
+      letterSpacing: '0.01em',
+    }}
+  >
+    <span style={{
+      display: 'inline-block',
+      width: 28,
+      height: 16,
+      borderRadius: 8,
+      background: textGlideOn ? '#C0533A' : '#ccc',
+      position: 'relative',
+      flexShrink: 0,
+      transition: 'background 200ms',
+    }}>
+      <span style={{
+        position: 'absolute',
+        top: 2,
+        left: textGlideOn ? 14 : 2,
+        width: 12,
+        height: 12,
+        borderRadius: '50%',
+        background: '#fff',
+        transition: 'left 200ms ease',
+      }} />
+    </span>
+    TextGlide view
+  </button>
+</div>
+```
+
+#### Nav rail toggle (bottom of dot stack, all screen sizes)
+In the NavRail component, add a thin horizontal divider and a small toggle button at the very bottom of the pill, below the 8 nav dots. This requires NavRail to also consume the TextGlideCtx. At the top of the NavRail function body add:
+
+```tsx
+const { enabled: tgOn, toggle: tgToggle } = useTextGlide();
+```
+
+Then at the bottom of the desktop nav pill (after the last dot item, before closing </nav>), add:
+
+```tsx
+<div style={{ width: '24px', height: '1px', background: '#E8E4DC', margin: '8px auto 4px' }} />
+<button
+  onClick={tgToggle}
+  title={tgOn ? 'Turn off TextGlide view' : 'Turn on TextGlide view'}
+  aria-label={tgOn ? 'Turn off TextGlide view' : 'Turn on TextGlide view'}
+  style={{
+    width: 14,
+    height: 14,
+    borderRadius: '3px',
+    background: tgOn ? '#C0533A' : '#ccc',
+    border: 'none',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: '4px auto 6px',
+    transition: 'background 150ms',
+    flexShrink: 0,
+  }}
+>
+  <span style={{ fontSize: 8, color: '#fff', lineHeight: 1, userSelect: 'none' }}>TG</span>
+</button>
+```
+
+In the mobile overlay menu, at the bottom of the nav links list (after the last section link, before the closing </nav>), add:
+
+```tsx
+<div style={{ borderTop: '1px solid #E8E4DC', margin: '12px 24px 0', paddingTop: '16px' }}>
+  <button
+    onClick={tgToggle}
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      fontFamily: 'inherit',
+      fontSize: 15,
+      color: '#3D2F1F',
+      padding: '4px 0',
+      width: '100%',
+    }}
+  >
+    <span style={{
+      display: 'inline-block',
+      width: 32,
+      height: 18,
+      borderRadius: 9,
+      background: tgOn ? '#C0533A' : '#ccc',
+      position: 'relative',
+      flexShrink: 0,
+      transition: 'background 200ms',
+    }}>
+      <span style={{
+        position: 'absolute',
+        top: 3,
+        left: tgOn ? 17 : 3,
+        width: 12,
+        height: 12,
+        borderRadius: '50%',
+        background: '#fff',
+        transition: 'left 200ms ease',
+      }} />
+    </span>
+    TextGlide view
+  </button>
+</div>
+```
+
+---
+
+### Step 5: Apply <Spaced> to prose content
+
+Wrap the string content (not JSX containers, only the inner text strings) of the following elements with the <Spaced> component. Do not wrap any element that contains nested JSX children — only elements whose direct child is a plain string:
+
+- The subtitle paragraph under the hero headline (the one starting "TextGlide adds subtle spacing...")
+- All <p> tags inside the Science section grid cells (the ones with space-y-1 containing font-medium headings and explanatory paragraphs)
+- All <p> tags inside the "Two ways to read" cards (Natural Scan and Grammar Parse description paragraphs)
+- The summary paragraph at the bottom of the Two ways to read section ("Why both?...")
+- All <dd> elements in the FAQ section (the answer text only, not the <dt> question)
+- The <p> tag in the "Why it exists" section (the one starting "Fluent readers don't read one word at a time...")
+- The three <p> tags inside the "How to use" step cards
+- The disclaimer paragraph under the References list (the one starting "These results come from many studies...")
+
+Do NOT wrap: headlines, labels, badge text, button labels, nav items, footer text, the hero Before/After cards, the preview textarea, the preview output div, or any element whose children include other JSX elements (only wrap leaf text nodes).
+
+---
+
+### Step 6: Add keyframe for toggle transition
+
+In the existing <style> block inside the Home component, add:
+
+```css
+@keyframes tgTogglePop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(0.94); }
+  100% { transform: scale(1); }
+}
+```
+
+No further changes. Do not modify any processing logic, API routes, Python backend, or any other UI section.
