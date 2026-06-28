@@ -1247,7 +1247,7 @@ function Home() {
                   Upload a DRM-free EPUB
                 </strong>
               </div>
-              <p className="text-muted-foreground leading-relaxed text-sm">If your book has DRM, you’ll need to legally remove it. TextGlide only works with DRM-free files and currently supports only EPUBs.</p>
+              <p className="text-muted-foreground leading-relaxed text-sm">If your book has DRM, you'll need to legally remove it. TextGlide only works with DRM-free files and currently supports only EPUBs.</p>
             </div>
             <div className="bg-muted/30 border border-border/40 rounded-xl p-6 space-y-3">
               <div className="flex items-center gap-3">
@@ -1291,7 +1291,7 @@ function Home() {
           <div className="grid md:grid-cols-2 gap-x-12 gap-y-5 text-muted-foreground leading-relaxed">
             <div className="space-y-1">
               <p className="font-medium text-foreground">Chunking</p>
-              <p>Fluent readers don’t read word by word. They group words into phrases and take in each group at a glance. TextGlide subtly surfaces these natural word groupings in your text, so your eyes and brain work less.</p>
+              <p>Fluent readers don't read word by word. They group words into phrases and take in each group at a glance. TextGlide subtly surfaces these natural word groupings in your text, so your eyes and brain work less.</p>
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">
@@ -1372,7 +1372,7 @@ function Home() {
               },
               {
                 q: "Does TextGlide remove DRM?",
-                a: "No, it can’t. TextGlide won’t process any EPUB with DRM and will let you know if that’s the case. It only works on DRM-free files, like books you wrote, public-domain texts, or files you’ve legally made DRM-free yourself.",
+                a: "No, it can't. TextGlide won't process any EPUB with DRM and will let you know if that's the case. It only works on DRM-free files, like books you wrote, public-domain texts, or files you've legally made DRM-free yourself.",
               },
               {
                 q: "How do I choose between Natural Scan and Grammar Parse?",
@@ -1450,6 +1450,8 @@ function Home() {
           borderTop: "1px solid #E8E4DC",
           background: "hsl(40 20% 97%)",
           marginTop: "6rem",
+          paddingTop: "40px",
+          paddingBottom: "40px",
         }}
       >
         <div
@@ -1462,6 +1464,7 @@ function Home() {
             flexWrap: "wrap",
             gap: "12px",
             padding: "40px 48px",
+            minHeight: "100px",
           }}
           className="footer-inner"
         >
@@ -1481,8 +1484,13 @@ function Home() {
             .gh-icon:hover path { fill: #111 !important; }
           `}</style>
 
-          {/* Left: Creator credit */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          {/* Left: Creator credit — links to GitHub profile */}
+          <a
+            href="https://github.com/avocadoattack"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}
+          >
             <img
               src="/Avocado-Attack-Avatar.svg"
               alt="Mr. Avocado avatar"
@@ -1490,10 +1498,15 @@ function Home() {
               height={40}
               style={{ borderRadius: "50%", flexShrink: 0 }}
             />
-            <span style={{ fontSize: "14px", color: "#888", fontFamily: "inherit" }}>
-              Created by Mr. Avocado
-            </span>
-          </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+              <span style={{ fontSize: "14px", color: "#888", fontFamily: "inherit" }}>
+                Created by Mr. Avocado
+              </span>
+              <span style={{ fontSize: "12px", color: "#aaa", fontFamily: "inherit" }}>
+                aka avocadoattack
+              </span>
+            </div>
+          </a>
 
           {/* Center: Legal */}
           <div
@@ -1503,27 +1516,14 @@ function Home() {
               flexDirection: "column",
               alignItems: "center",
               gap: "3px",
-              fontSize: "13px",
+              fontSize: "14px",
               color: "#999",
               lineHeight: "1.5",
             }}
           >
             <span>© 2026 Mr. Avocado</span>
             <a
-              href="https://opensource.org/licenses/MIT"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: "#999", textDecoration: "none" }}
-              onMouseEnter={e => (e.currentTarget.style.color = "#666")}
-              onMouseLeave={e => (e.currentTarget.style.color = "#999")}
-            >
-              MIT License
-            </a>
-            <span style={{ color: "#bbb", fontSize: "13px" }}>
-              TextGlide — a reading aid, not a medical device.
-            </span>
-            <a
-              href="https://github.com/avocadoattack/textglide"
+              href="https://github.com/firstcontributions/open-source-badges"
               target="_blank"
               rel="noopener noreferrer"
               style={{ display: "inline-block", marginTop: "8px", lineHeight: 0, border: "none" }}
