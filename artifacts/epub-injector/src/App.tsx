@@ -690,7 +690,7 @@ function Home() {
               transition: "left 200ms ease",
             }} />
           </span>
-          TextGlide view
+          {textGlideOn ? "TextGlide On" : "TextGlide Off"}
         </button>
       </div>
       <NavRail />
