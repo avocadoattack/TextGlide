@@ -33,7 +33,6 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import NotFound from "@/pages/not-found";
 import { applyNaturalScan } from "./naturalScan";
-import 'altcha';
 
 // ── TextGlide site-wide reading toggle ──────────────────────────────────────
 const TextGlideCtx = createContext<{
@@ -451,18 +450,48 @@ function Home() {
   const [downloadFilename, setDownloadFilename] = useState("");
 
   const [altchaToken, setAltchaToken] = useState("");
-  const altchaRef = useRef<HTMLElement & { reset?: () => void }>(null);
+  const [altchaSolveKey, setAltchaSolveKey] = useState(0);
 
   useEffect(() => {
-    const el = altchaRef.current;
-    if (!el) return;
-    const handler = (e: Event) => {
-      const token = (e as CustomEvent<{ token: string }>).detail?.token ?? "";
-      setAltchaToken(token);
-    };
-    el.addEventListener("solve", handler);
-    return () => el.removeEventListener("solve", handler);
-  }, []);
+    let cancelled = false;
+    setAltchaToken("");
+
+    const workerSrc = `
+      self.onmessage = async ({ data: { challenge, salt, maxnumber } }) => {
+        const enc = new TextEncoder();
+        for (let n = 0; n <= maxnumber; n++) {
+          const buf = await crypto.subtle.digest('SHA-256', enc.encode(salt + n));
+          const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+          if (hex === challenge) { self.postMessage({ number: n }); return; }
+        }
+        self.postMessage({ number: null });
+      };
+    `;
+
+    async function run() {
+      try {
+        const res = await fetch('/api/altcha');
+        if (!res.ok || cancelled) return;
+        const { algorithm, challenge, maxnumber, salt, signature } = await res.json();
+        const blob = new Blob([workerSrc], { type: 'text/javascript' });
+        const url = URL.createObjectURL(blob);
+        const worker = new Worker(url);
+        worker.onmessage = ({ data: { number } }) => {
+          URL.revokeObjectURL(url);
+          worker.terminate();
+          if (number !== null && !cancelled) {
+            const payload = btoa(JSON.stringify({ algorithm, challenge, number, salt, signature }));
+            setAltchaToken(payload);
+          }
+        };
+        worker.onerror = () => { URL.revokeObjectURL(url); worker.terminate(); };
+        worker.postMessage({ challenge, salt, maxnumber });
+      } catch { /* silently fail; button stays disabled */ }
+    }
+
+    run();
+    return () => { cancelled = true; };
+  }, [altchaSolveKey]);
 
   const [gapsOpen, setGapsOpen] = useState(false);
   useEffect(() => {
@@ -592,8 +621,7 @@ function Home() {
       setDownloadUrl(url);
       setDownloadFilename(filename);
       setStatus("success");
-      setAltchaToken("");
-      altchaRef.current?.reset?.();
+      setAltchaSolveKey(k => k + 1);
     } catch (err: unknown) {
       setStatus("error");
       setErrorMsg(
@@ -1296,16 +1324,6 @@ function Home() {
               <p className="text-xs text-muted-foreground/70 text-center w-full leading-relaxed">
                 For best results, set your e-reader to <strong className="text-muted-foreground">left-aligned (ragged-right)</strong> text. Justified text stretches normal spaces and can cancel out the phrase spacing.
               </p>
-
-              {/* Altcha invisible PoW widget */}
-              <altcha-widget
-                ref={altchaRef as React.RefObject<HTMLElement>}
-                challengeurl="/api/altcha"
-                auto="onload"
-                display="invisible"
-                name="altcha"
-                style={{ display: "none" }}
-              />
 
               {/* Process button */}
               <Button

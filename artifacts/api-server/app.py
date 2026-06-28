@@ -84,16 +84,16 @@ def _safe(value: str, allowed: set, default: str) -> str:
 
 @app.route("/api/altcha", methods=["GET"])
 def altcha_challenge():
-    options = altcha.ChallengeOptions(
+    options = altcha.ChallengeOptionsV1(
         hmac_key=ALTCHA_HMAC_KEY,
         max_number=100000,
         expires=datetime.now(timezone.utc) + timedelta(minutes=10)
     )
-    challenge = altcha.create_challenge(options)
+    challenge = altcha.create_challenge_v1(options)
     return jsonify({
         'algorithm': challenge.algorithm,
         'challenge': challenge.challenge,
-        'maxnumber': challenge.maxnumber,
+        'maxnumber': challenge.max_number,
         'salt': challenge.salt,
         'signature': challenge.signature,
     })
@@ -147,7 +147,7 @@ def process():
     if not altcha_payload:
         return jsonify({'error': 'Verification token missing. Please wait for the page to load fully and try again.'}), 403
     try:
-        ok, err = altcha.verify_solution(altcha_payload, ALTCHA_HMAC_KEY, check_expires=True)
+        ok, err = altcha.verify_solution_v1(altcha_payload, ALTCHA_HMAC_KEY, check_expires=True)
         if not ok:
             return jsonify({'error': 'Verification failed. Please refresh and try again.'}), 403
     except Exception:
