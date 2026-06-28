@@ -1450,8 +1450,6 @@ function Home() {
           borderTop: "1px solid #E8E4DC",
           background: "hsl(40 20% 97%)",
           marginTop: "6rem",
-          paddingTop: "40px",
-          paddingBottom: "40px",
         }}
       >
         <div
@@ -1464,7 +1462,6 @@ function Home() {
             flexWrap: "wrap",
             gap: "12px",
             padding: "40px 48px",
-            minHeight: "100px",
           }}
           className="footer-inner"
         >
@@ -1474,7 +1471,7 @@ function Home() {
                 flex-direction: column !important;
                 align-items: center !important;
                 justify-content: center !important;
-                padding: 32px 24px !important;
+                padding: 28px 24px !important;
                 gap: 16px !important;
               }
               .footer-center { text-align: center; }
