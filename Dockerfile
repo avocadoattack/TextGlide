@@ -15,7 +15,7 @@ COPY lib/ ./lib/
 COPY artifacts/epub-injector/ ./artifacts/epub-injector/
 
 RUN pnpm install --frozen-lockfile
-RUN PORT=3000 pnpm --filter @workspace/epub-injector run build
+RUN PORT=3000 BASE_PATH=/ NODE_ENV=production pnpm --filter @workspace/epub-injector run build
 # Output: /build/artifacts/epub-injector/dist/public/
 
 
