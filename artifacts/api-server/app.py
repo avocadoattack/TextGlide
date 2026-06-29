@@ -18,7 +18,7 @@ import altcha
 import secrets as _secrets
 from datetime import datetime, timezone, timedelta
 
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request, send_file, send_from_directory
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
@@ -221,6 +221,18 @@ def _fallback_message(requested: str, actual: str) -> str:
             "could not be loaded. A keyword heuristic was used instead."
         )
     return f"Mode requested: {requested_label}. Mode used: {actual}."
+
+
+# Serve React app for all non-API routes (production/Docker only)
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_static(path):
+    static_dir = os.path.join(os.path.dirname(__file__), 'static')
+    if not os.path.exists(static_dir):
+        return '', 204  # Dev environment — static dir not present, no-op
+    if path and os.path.exists(os.path.join(static_dir, path)):
+        return send_from_directory(static_dir, path)
+    return send_from_directory(static_dir, 'index.html')
 
 
 # ---------------------------------------------------------------------------
