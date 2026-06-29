@@ -1721,6 +1721,14 @@ function Home() {
           >
             <span>© 2026 Mr. Avocado</span>
             <a
+              href="https://github.com/avocadoattack/textglide/blob/main/CONTRIBUTING.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontSize: "12px", color: "#999", marginTop: "6px", display: "inline-block", textDecoration: "none" }}
+            >
+              Contributions welcome
+            </a>
+            <a
               href="https://github.com/firstcontributions/open-source-badges"
               target="_blank"
               rel="noopener noreferrer"
@@ -1731,14 +1739,6 @@ function Home() {
                 alt="Open Source Love"
                 style={{ height: "22px", width: "auto", display: "block" }}
               />
-            </a>
-            <a
-              href="https://github.com/avocadoattack/textglide/blob/main/CONTRIBUTING.md"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ fontSize: "12px", color: "#999", marginTop: "6px", display: "inline-block", textDecoration: "none" }}
-            >
-              Contributions welcome
             </a>
           </div>
 
@@ -1834,7 +1834,7 @@ function Home() {
             ×
           </button>
           <p style={{ margin: "0 0 8px", paddingRight: "16px" }}>
-            TextGlide is free. If it saves you reading time, a coffee helps keep it running.
+            TextGlide is free. If it saves you reading time, a coffee helps.
           </p>
           <a
             href="https://buymeacoffee.com/avocadoattack"
