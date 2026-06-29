@@ -31,6 +31,20 @@ from bs4 import BeautifulSoup, NavigableString, Tag
 from textglide_config import DENSITY_CFG, GAP_CHAR
 
 # ---------------------------------------------------------------------------
+# Resource-limit constants (DoS hardening)
+# ---------------------------------------------------------------------------
+
+# Decompression-bomb limits
+MAX_ZIP_MEMBERS: int = 1_000                        # max entries in archive
+MAX_ENTRY_UNCOMPRESSED_BYTES: int = 10 * 1024 * 1024  # 10 MB per entry
+MAX_TOTAL_UNCOMPRESSED_BYTES: int = 150 * 1024 * 1024  # 150 MB total expansion
+
+# NLP / text-processing limits
+MAX_CONTENT_DOCS: int = 500                         # max XHTML/HTML files patched
+MAX_TEXT_NODE_CHARS: int = 10_000                   # skip NLP for nodes longer than this
+MAX_TOTAL_TEXT_CHARS: int = 1_000_000               # stop patching after 1 M chars total
+
+# ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
@@ -451,10 +465,16 @@ def _patch_document(
     mode: str,
     chunk_density: str,
     language: str,
+    text_budget: list[int],
 ) -> tuple[bytes, str]:
     """
     Patch all text nodes in one XHTML document and inject left-align CSS.
     Returns (patched_bytes, mode_actually_used).
+
+    text_budget is a one-element mutable list holding the remaining character
+    allowance for NLP calls across all documents in this job.  Nodes are
+    skipped (left unpatched) when the budget is exhausted or when a single
+    node exceeds MAX_TEXT_NODE_CHARS — neither case causes an error.
     """
     mode_used = mode
 
@@ -486,6 +506,17 @@ def _patch_document(
         original = str(node)
         if not original.strip():
             continue
+
+        # Skip individual nodes that are abnormally large — they are not typical
+        # prose and would force an expensive full-document NLP pass.
+        if len(original) > MAX_TEXT_NODE_CHARS:
+            continue
+
+        # Stop patching once the cumulative text budget is exhausted.
+        if text_budget[0] <= 0:
+            break
+
+        text_budget[0] -= len(original)
 
         eff_lang = language
         if language == "auto":
@@ -529,16 +560,50 @@ def preview_text(
 
 
 # ---------------------------------------------------------------------------
+# ZIP entry safe-reader (decompression-bomb protection)
+# ---------------------------------------------------------------------------
+
+def _read_zip_entry(zf: zipfile.ZipFile, name: str) -> bytes:
+    """
+    Decompress a single ZIP entry while enforcing MAX_ENTRY_UNCOMPRESSED_BYTES.
+
+    We stream through zf.open() rather than relying on the stored file_size
+    metadata (which is attacker-controlled and may be zero or absent).
+    Reading one byte past the limit is sufficient to detect a violation while
+    keeping memory overhead to a minimum.
+    """
+    limit = MAX_ENTRY_UNCOMPRESSED_BYTES
+    with zf.open(name) as fh:
+        data = fh.read(limit + 1)
+    if len(data) > limit:
+        raise ValueError(
+            f"ZIP entry {name!r} exceeds the {limit // (1024 * 1024)} MB "
+            "uncompressed size limit."
+        )
+    return data
+
+
+def _check_zip_members(zf: zipfile.ZipFile) -> None:
+    """Raise ValueError if the archive has more entries than MAX_ZIP_MEMBERS."""
+    count = len(zf.infolist())
+    if count > MAX_ZIP_MEMBERS:
+        raise ValueError(
+            f"Archive has too many entries ({count} > {MAX_ZIP_MEMBERS})."
+        )
+
+
+# ---------------------------------------------------------------------------
 # Public: DRM check
 # ---------------------------------------------------------------------------
 
 def is_drm_protected(epub_path: str) -> bool:
     with zipfile.ZipFile(epub_path, "r") as zf:
+        _check_zip_members(zf)
         names_lower = {n.lower() for n in zf.namelist()}
         if "meta-inf/encryption.xml" not in names_lower:
             return False
         real = next(n for n in zf.namelist() if n.lower() == "meta-inf/encryption.xml")
-        content = zf.read(real).decode("utf-8", errors="replace")
+        content = _read_zip_entry(zf, real).decode("utf-8", errors="replace")
         return "<EncryptedData" in content
 
 
@@ -551,7 +616,7 @@ def _get_content_doc_paths(zf: zipfile.ZipFile) -> set[str]:
     if opf is None:
         return {n for n in zf.namelist() if n.lower().endswith((".xhtml", ".html", ".htm"))}
 
-    opf_bytes = zf.read(opf)
+    opf_bytes = _read_zip_entry(zf, opf)
     soup = BeautifulSoup(opf_bytes, "lxml-xml")
     opf_dir = str(Path(opf).parent)
     if opf_dir == ".":
@@ -568,7 +633,7 @@ def _get_content_doc_paths(zf: zipfile.ZipFile) -> set[str]:
 
 def _find_opf(zf: zipfile.ZipFile) -> str | None:
     try:
-        container = zf.read("META-INF/container.xml")
+        container = _read_zip_entry(zf, "META-INF/container.xml")
         s = BeautifulSoup(container, "lxml-xml")
         rf = s.find("rootfile")
         if rf and rf.get("full-path"):
@@ -590,25 +655,50 @@ def process_epub(
     """
     Process every content document in the EPUB.
     Returns (epub_bytes, mode_actually_used).
+
+    DoS hardening applied here:
+    - _check_zip_members() rejects archives with too many entries.
+    - _read_zip_entry() caps each entry at MAX_ENTRY_UNCOMPRESSED_BYTES.
+    - total_uncompressed tracks cumulative expansion; raises if it exceeds
+      MAX_TOTAL_UNCOMPRESSED_BYTES before all entries are copied.
+    - content_docs_patched counts how many XHTML/HTML files we actually patch;
+      files beyond MAX_CONTENT_DOCS are copied verbatim.
+    - text_budget is a shared mutable counter passed into each _patch_document()
+      call; NLP work stops once the per-request char allowance is used up.
     """
     with zipfile.ZipFile(epub_path, "r") as zf:
+        _check_zip_members(zf)
         content_paths = _get_content_doc_paths(zf)
         names = zf.namelist()
         mode_used = mode
 
+        total_uncompressed = 0
+        content_docs_patched = 0
+        text_budget: list[int] = [MAX_TOTAL_TEXT_CHARS]
+
         out_buf = io.BytesIO()
         with zipfile.ZipFile(out_buf, "w", compression=zipfile.ZIP_DEFLATED) as out_zf:
             for name in names:
-                data = zf.read(name)
-                if name in content_paths:
+                data = _read_zip_entry(zf, name)
+
+                total_uncompressed += len(data)
+                if total_uncompressed > MAX_TOTAL_UNCOMPRESSED_BYTES:
+                    raise ValueError(
+                        f"Archive total uncompressed size exceeds the "
+                        f"{MAX_TOTAL_UNCOMPRESSED_BYTES // (1024 * 1024)} MB limit."
+                    )
+
+                if name in content_paths and content_docs_patched < MAX_CONTENT_DOCS:
                     try:
                         patched, mu = _patch_document(
-                            data, mode, chunk_density, language
+                            data, mode, chunk_density, language, text_budget
                         )
                         data = patched
                         mode_used = mu
+                        content_docs_patched += 1
                     except Exception:
                         pass
+
                 out_zf.writestr(name, data)
 
         return out_buf.getvalue(), mode_used

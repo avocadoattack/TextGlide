@@ -180,6 +180,8 @@ def process():
                         "DRM-free books. Please use a DRM-free copy."
                     )
                 }), 422
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
         except Exception:
             return jsonify({"error": "Could not read the EPUB. Please check it is a valid, unencrypted EPUB file."}), 400
 
@@ -187,6 +189,8 @@ def process():
             epub_bytes, mode_used = process_epub(
                 input_path, mode, chunk_density, language
             )
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
         except Exception:
             traceback.print_exc()
             return jsonify({"error": "Processing failed. The file may be malformed."}), 500
