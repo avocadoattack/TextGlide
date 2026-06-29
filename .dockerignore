@@ -1,0 +1,13 @@
+.git
+.replit
+replit.nix
+**/node_modules
+**/__pycache__
+**/*.pyc
+**/*.pyo
+artifacts/epub-injector/dist
+artifacts/mockup-sandbox
+*.md
+*.txt
+*.png
+*.pdf
