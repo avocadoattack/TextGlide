@@ -41,6 +41,8 @@ if not ALTCHA_HMAC_KEY:
     ALTCHA_HMAC_KEY = _secrets.token_hex(32)
     print("WARNING: ALTCHA_HMAC_KEY not set in environment — using ephemeral key. Set this secret for production stability.")
 
+MAX_UPLOAD_BYTES = int(os.environ.get("MAX_UPLOAD_MB", "5")) * 1024 * 1024
+
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024  # 50 MB
 
@@ -173,7 +175,7 @@ def process():
     file.seek(0, 2)  # seek to end
     file_size = file.tell()
     file.seek(0)     # reset to start
-    if file_size > 5 * 1024 * 1024:  # 5 MB
+    if file_size > MAX_UPLOAD_BYTES:
         return jsonify({
             "error": "This file is over 5 MB. Large EPUBs may time out on the hosted version. For bigger books, consider self-hosting TextGlide — see the README for instructions."
         }), 413
