@@ -445,6 +445,7 @@ function Home() {
     "idle" | "processing" | "success" | "error"
   >("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [fileSizeError, setFileSizeError] = useState("");
   const [fallbackMsg, setFallbackMsg] = useState("");
   const [downloadUrl, setDownloadUrl] = useState("");
   const [downloadFilename, setDownloadFilename] = useState("");
@@ -571,11 +572,19 @@ function Home() {
         setErrorMsg("Please select a valid .epub file.");
         setStatus("error");
         setFile(null);
+        setFileSizeError("");
+        return;
+      }
+      if (selected.size > 5 * 1024 * 1024) {
+        setFileSizeError("This file is over 5 MB. Large EPUBs may time out on the hosted version. For bigger books, consider self-hosting TextGlide.");
+        setFile(null);
+        if (e.target) e.target.value = "";
         return;
       }
       setFile(selected);
       setStatus("idle");
       setErrorMsg("");
+      setFileSizeError("");
       setFallbackMsg("");
       setDownloadUrl("");
     }
@@ -634,6 +643,7 @@ function Home() {
     setFile(null);
     setStatus("idle");
     setErrorMsg("");
+    setFileSizeError("");
     setFallbackMsg("");
     setDownloadUrl("");
     setDownloadFilename("");
@@ -667,11 +677,18 @@ function Home() {
       setErrorMsg("Please select a valid .epub file.");
       setStatus("error");
       setFile(null);
+      setFileSizeError("");
+      return;
+    }
+    if (dropped.size > 5 * 1024 * 1024) {
+      setFileSizeError("This file is over 5 MB. Large EPUBs may time out on the hosted version. For bigger books, consider self-hosting TextGlide.");
+      setFile(null);
       return;
     }
     setFile(dropped);
     setStatus("idle");
     setErrorMsg("");
+    setFileSizeError("");
     setFallbackMsg("");
     setDownloadUrl("");
   };
@@ -1297,6 +1314,17 @@ function Home() {
                 )}
               </div>
 
+              {/* File size warning */}
+              {fileSizeError && (
+                <p
+                  className="text-sm text-center w-full"
+                  style={{ color: "#9a7c5a" }}
+                  data-testid="file-size-warning"
+                >
+                  {fileSizeError}
+                </p>
+              )}
+
               {/* Settings recap */}
               <div
                 className="flex items-center justify-center gap-2 text-sm text-muted-foreground bg-muted/30 px-5 py-3 rounded-lg border border-border/40 w-full text-center"
@@ -1329,7 +1357,7 @@ function Home() {
               <Button
                 className="w-full md:max-w-xs h-14 text-lg font-medium shadow-md rounded-xl"
                 size="lg"
-                disabled={!file || status === "processing" || !altchaToken}
+                disabled={!file || status === "processing" || !altchaToken || !!fileSizeError}
                 onClick={handleProcess}
                 data-testid="button-process"
               >

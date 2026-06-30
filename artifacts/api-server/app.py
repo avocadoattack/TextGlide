@@ -169,6 +169,15 @@ def process():
     if not file.filename.lower().endswith(".epub"):
         return jsonify({"error": "Please upload an EPUB file (.epub)."}), 400
 
+    # File size cap — large EPUBs risk timeout on the hosted version
+    file.seek(0, 2)  # seek to end
+    file_size = file.tell()
+    file.seek(0)     # reset to start
+    if file_size > 5 * 1024 * 1024:  # 5 MB
+        return jsonify({
+            "error": "This file is over 5 MB. Large EPUBs may time out on the hosted version. For bigger books, consider self-hosting TextGlide — see the README for instructions."
+        }), 413
+
     mode = _safe(request.form.get("mode", "pseudosyntactic"), _VALID_MODES, "pseudosyntactic")
     chunk_density = _safe(request.form.get("chunk_density", "balanced"), _VALID_DENSITIES, "balanced")
     language = _safe(request.form.get("language", "auto"), _VALID_LANGS, "auto")

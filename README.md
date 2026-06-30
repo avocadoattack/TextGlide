@@ -205,6 +205,8 @@ docker run -e ALTCHA_HMAC_KEY="your-secret" -e PORT=8080 -p 8080:8080 textglide
 | Feature | Description |
 |---|---|
 | Mode consolidation | Retire Grammar Parse once real-world A/B tests confirm the winner |
+| Streaming progress (SSE) | Replace single-response processing with Server-Sent Events so large EPUBs aren't bounded by the HTTP proxy timeout |
+| Reading Support fine-tuning | Recalibrate the Strong setting's minimum character threshold to create a more pronounced difference from Balanced |
 
 ### v2 — Exploratory 🔭
 

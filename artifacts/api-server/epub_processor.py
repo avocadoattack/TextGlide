@@ -69,6 +69,9 @@ SENTENCE_END_RE = re.compile(r'([.!?]["\'\u201c\u201d\u2018\u2019]?)\s+')
 # Tags whose text nodes we never touch
 SKIP_TAGS = frozenset({"script", "style", "code", "pre", "kbd", "samp", "var"})
 
+# Characters after which a gap must NOT be inserted (opening delimiters)
+_OPENING_CHARS = frozenset("([\"'«¿¡")
+
 # EPUB content MIME types
 CONTENT_MIME_TYPES = frozenset({"application/xhtml+xml", "text/html"})
 
@@ -374,9 +377,14 @@ def _insert_gaps(tokens: list, breaks: set[int], gap: str) -> str:
     parts: list[str] = []
     for tok in tokens:
         if tok.i in breaks:
-            if parts and parts[-1].endswith(" "):
-                parts[-1] = parts[-1][:-1]
-            parts.append(gap + " ")
+            # Suppress gap right after opening brackets/quotes/parens
+            prev_text = "".join(parts).rstrip()
+            if prev_text and prev_text[-1] in _OPENING_CHARS:
+                pass  # skip this gap
+            else:
+                if parts and parts[-1].endswith(" "):
+                    parts[-1] = parts[-1][:-1]
+                parts.append(gap + " ")
         parts.append(tok.text)
         if tok.whitespace_:
             parts.append(tok.whitespace_)
