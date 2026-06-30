@@ -29,6 +29,13 @@ from epub_processor import (
     process_epub,
 )
 
+# Pre-load spaCy models at startup so the first request does not pay
+# the cold-load cost (~30-60 s on shared-cpu-1x).
+# Must run before any request is handled.
+from epub_processor import _load_model as _preload_model
+_preload_model("en")
+_preload_model("es")
+
 ALTCHA_HMAC_KEY = os.environ.get('ALTCHA_HMAC_KEY', '')
 if not ALTCHA_HMAC_KEY:
     ALTCHA_HMAC_KEY = _secrets.token_hex(32)
