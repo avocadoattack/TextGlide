@@ -11,7 +11,6 @@ RUN npm install -g pnpm
 COPY pnpm-workspace.yaml package.json tsconfig.json tsconfig.base.json pnpm-lock.yaml ./
 
 # Shared TS libs + the frontend package
-COPY lib/ ./lib/
 COPY artifacts/epub-injector/ ./artifacts/epub-injector/
 
 RUN pnpm install --frozen-lockfile
