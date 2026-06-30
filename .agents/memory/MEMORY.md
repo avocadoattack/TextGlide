@@ -1,1 +1,0 @@
-- [TextGlide config sync](textglide-config-sync.md) — JS Natural Scan engine constants must stay in sync with the Python config; mode labels are display-only and decoupled from API enum values.
