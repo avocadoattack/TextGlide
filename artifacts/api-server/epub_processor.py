@@ -124,7 +124,7 @@ def _load_model(lang: str) -> _ModelState:
     spacy_id = _MODEL_IDS.get(lang, "en_core_web_sm")
     try:
         import spacy
-        state.nlp = spacy.load(spacy_id)
+        state.nlp = spacy.load(spacy_id, exclude=["ner", "lemmatizer"])
     except Exception:
         state.failed = True
     return state
@@ -292,7 +292,8 @@ def _patch_pseudosyntactic(
         return _keyword_fallback(text, chunk_density, lang), "keyword_fallback"
 
     try:
-        doc = state.nlp(text)
+        with state.nlp.select_pipes(disable=["parser"]):
+            doc = state.nlp(text)
     except Exception:
         return _keyword_fallback(text, chunk_density, lang), "keyword_fallback"
 
@@ -431,7 +432,8 @@ def _patch_syntactic(text: str, chunk_density: str, lang: str) -> tuple[str, str
     min_chars = cfg["min_chars"]
 
     try:
-        doc = state.nlp(text)
+        with state.nlp.select_pipes(disable=["senter"]):
+            doc = state.nlp(text)
     except Exception:
         return _keyword_fallback(text, chunk_density, lang), "keyword_fallback"
 
