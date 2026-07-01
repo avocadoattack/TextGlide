@@ -272,11 +272,11 @@ If TextGlide has been useful to you, consider chipping in:
 
 ## 🙏 Acknowledgments
 
-TextGlide is directly inspired by Asym, a phrase-spacing tool developed by Asymmetrica Labs. Asym is no longer available. TextGlide is an independent, open-source project built from the published scientific literature rather than from Asym's code or copy.
+TextGlide is inspired by Asym, a phrase-spacing tool from Asymmetrica Labs. With Asym no longer available, TextGlide was developed independently as an open-source project based on scientific research, not Asym's code or content.
 
-None of this works without the researchers who did the actual work. Reading science is a slow, careful, often thankless field — decades of controlled studies, most of them never reaching outside academic journals, building an evidence base one modest, honestly-reported effect size at a time. Thank you to North & Jenkins, Coleman & Kim, Mason & Kendall, Keenan, Lefton, Negin, Jandreau, Muncer, Bever, and every researcher cited in the References section — and to the broader reading-science and psycholinguistics community whose work made a tool like this possible at all. TextGlide is downstream of that research; whatever value it provides is a credit to it, not to this project.
+This project stands on decades of careful reading science. Researchers such as North & Jenkins, Coleman & Kim, Mason & Kendall, Keenan, Lefton, Negin, Magloire, Jandreau, Muncer, Bever, and others in the reading-science and psycholinguistics community built the evidence base that made TextGlide possible. Any value in this tool comes from their efforts.
 
-The scientific foundation rests on a body of research stretching from North & Jenkins (1951) through Bever, Jandreau, and colleagues' work in the 1980s and 1990s. The core insight: that phrase-sensitive spacing helps reading, that the mechanism is perceptual not orthographic, and that the effect is strongest for readers who haven't yet automated phrase-grouping, belongs to that literature.
+The scientific foundation for TextGlide traces back to North & Jenkins (1951) and subsequent work through the 1990s. Research shows that phrase-sensitive spacing aids reading by leveraging perceptual mechanisms, particularly for readers who have not yet automated phrase-grouping.
 
 ---
 
