@@ -42,6 +42,7 @@ if not ALTCHA_HMAC_KEY:
     print("WARNING: ALTCHA_HMAC_KEY not set in environment — using ephemeral key. Set this secret for production stability.")
 
 MAX_UPLOAD_BYTES = int(os.environ.get("MAX_UPLOAD_MB", "5")) * 1024 * 1024
+OWNER_TOKEN = os.environ.get("OWNER_TOKEN", "")
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024  # 50 MB
@@ -68,7 +69,7 @@ def add_cors(response):
     origin = request.headers.get("Origin", "")
     response.headers["Access-Control-Allow-Origin"] = origin or "*"
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, X-Owner-Token"
     response.headers["Access-Control-Allow-Credentials"] = "true"
     return response
 
@@ -85,6 +86,13 @@ _VALID_LANGS = {"auto", "en", "es"}
 def _safe(value: str, allowed: set, default: str) -> str:
     v = (value or "").strip().lower()
     return v if v in allowed else default
+
+
+def _is_owner_request() -> bool:
+    if not OWNER_TOKEN:
+        return False
+    provided = request.headers.get("X-Owner-Token", "")
+    return bool(provided and provided == OWNER_TOKEN)
 
 
 # ---------------------------------------------------------------------------
@@ -147,7 +155,7 @@ def preview():
 # ---------------------------------------------------------------------------
 
 @app.route("/api/process", methods=["POST", "OPTIONS"])
-@limiter.limit("5 per hour")
+@limiter.limit("5 per hour", exempt_when=_is_owner_request)
 def process():
     if request.method == "OPTIONS":
         return "", 204
@@ -175,7 +183,7 @@ def process():
     file.seek(0, 2)  # seek to end
     file_size = file.tell()
     file.seek(0)     # reset to start
-    if file_size > MAX_UPLOAD_BYTES:
+    if not _is_owner_request() and file_size > MAX_UPLOAD_BYTES:
         return jsonify({
             "error": "This file is over 5 MB. Large EPUBs may time out on the hosted version. For bigger books, consider self-hosting TextGlide — see the README for instructions."
         }), 413

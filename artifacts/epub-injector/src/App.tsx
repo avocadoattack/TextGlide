@@ -507,6 +507,15 @@ function Home() {
     setTimeout(() => setBmcToast("hidden"), 200);
   }, []);
 
+  const [ownerPromptOpen, setOwnerPromptOpen] = useState(false);
+  const [ownerInput, setOwnerInput] = useState("");
+
+  const handleOwnerSubmit = () => {
+    if (ownerInput) localStorage.setItem("textglide_owner_token", ownerInput);
+    setOwnerInput("");
+    setOwnerPromptOpen(false);
+  };
+
   useEffect(() => {
     if (status !== "success") return;
     if (sessionStorage.getItem("bmcToastShown")) return;
@@ -527,6 +536,11 @@ function Home() {
     );
     observer.observe(el);
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("owner") === "1") setOwnerPromptOpen(true);
   }, []);
 
   // Debounced preview fetch
@@ -575,12 +589,6 @@ function Home() {
         setFileSizeError("");
         return;
       }
-      if (selected.size > 5 * 1024 * 1024) {
-        setFileSizeError("This file is over 5 MB. Large EPUBs may time out on the hosted version. For bigger books, consider self-hosting TextGlide.");
-        setFile(null);
-        if (e.target) e.target.value = "";
-        return;
-      }
       setFile(selected);
       setStatus("idle");
       setErrorMsg("");
@@ -605,8 +613,12 @@ function Home() {
     formData.append("altcha", altchaToken);
 
     try {
+      const ownerHdr = localStorage.getItem("textglide_owner_token");
+      const processHeaders: Record<string, string> = {};
+      if (ownerHdr) processHeaders["X-Owner-Token"] = ownerHdr;
       const res = await fetch("/api/process", {
         method: "POST",
+        headers: processHeaders,
         body: formData,
       });
       if (!res.ok) {
@@ -678,11 +690,6 @@ function Home() {
       setStatus("error");
       setFile(null);
       setFileSizeError("");
-      return;
-    }
-    if (dropped.size > 5 * 1024 * 1024) {
-      setFileSizeError("This file is over 5 MB. Large EPUBs may time out on the hosted version. For bigger books, consider self-hosting TextGlide.");
-      setFile(null);
       return;
     }
     setFile(dropped);
@@ -1314,16 +1321,10 @@ function Home() {
                 )}
               </div>
 
-              {/* File size warning */}
-              {fileSizeError && (
-                <p
-                  className="text-sm text-center w-full"
-                  style={{ color: "#9a7c5a" }}
-                  data-testid="file-size-warning"
-                >
-                  {fileSizeError}
-                </p>
-              )}
+              {/* File size info */}
+              <p className="text-xs text-muted-foreground/60 text-center w-full">
+                Max file size: 5MB · 5 processings per hour
+              </p>
 
               {/* Settings recap */}
               <div
@@ -1357,7 +1358,7 @@ function Home() {
               <Button
                 className="w-full md:max-w-xs h-14 text-lg font-medium shadow-md rounded-xl"
                 size="lg"
-                disabled={!file || status === "processing" || !altchaToken || !!fileSizeError}
+                disabled={!file || status === "processing" || !altchaToken}
                 onClick={handleProcess}
                 data-testid="button-process"
               >
@@ -1692,6 +1693,7 @@ function Home() {
           borderTop: "1px solid #E8E4DC",
           background: "hsl(40 20% 97%)",
           marginTop: "6rem",
+          position: "relative",
         }}
       >
         <div
@@ -1833,6 +1835,27 @@ function Home() {
             </a>
           </div>
         </div>
+        <button
+          onClick={() => setOwnerPromptOpen(true)}
+          aria-hidden="true"
+          tabIndex={-1}
+          style={{
+            position: "absolute",
+            bottom: "6px",
+            right: "10px",
+            background: "none",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+            fontSize: "9px",
+            color: "rgba(80,60,40,0.18)",
+            fontFamily: "inherit",
+            lineHeight: 1,
+            userSelect: "none",
+          }}
+        >
+          π
+        </button>
       </footer>
 
       {/* BMC Toast */}
@@ -1894,6 +1917,71 @@ function Home() {
         </div>
       )}
     </div>
+
+      {/* Owner unlock prompt */}
+      {ownerPromptOpen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.35)",
+            zIndex: 2000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onClick={() => setOwnerPromptOpen(false)}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: "12px",
+              padding: "24px 28px",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+              minWidth: "260px",
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <input
+              type="password"
+              autoFocus
+              value={ownerInput}
+              onChange={e => setOwnerInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter") handleOwnerSubmit();
+                if (e.key === "Escape") setOwnerPromptOpen(false);
+              }}
+              style={{
+                border: "1px solid #ddd",
+                borderRadius: "6px",
+                padding: "8px 10px",
+                fontSize: "14px",
+                outline: "none",
+                fontFamily: "inherit",
+              }}
+              placeholder="Token"
+            />
+            <button
+              onClick={handleOwnerSubmit}
+              style={{
+                background: "#2a2016",
+                color: "#f5f0e8",
+                border: "none",
+                borderRadius: "6px",
+                padding: "8px 14px",
+                fontSize: "13px",
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              Apply
+            </button>
+          </div>
+        </div>
+      )}
     </TextGlideCtx.Provider>
   );
 }
