@@ -1452,6 +1452,20 @@ function Home() {
                 )}
               </div>
             )}
+
+            {/* Self-hosting nudge */}
+            <p className="text-xs text-center leading-relaxed" style={{ color: "#9a7c5a", marginTop: "8px" }}>
+              This hosted version is just a taste.{" "}
+              <a
+                href="https://github.com/avocadoattack/TextGlide"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "#7a6349", textDecoration: "underline" }}
+              >
+                Self-host TextGlide
+              </a>{" "}
+              for unlimited file sizes, no rate limits, and full control.
+            </p>
           </div>
         </section>
 

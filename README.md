@@ -114,9 +114,9 @@ STRONG_TRIGGERS         = [CCONJ, SCONJ, ADP, who, which, whom]
 
 ### Processing pipeline
 
-1. Validate the uploaded file is a real EPUB (a ZIP of XHTML)
+1. Validate the uploaded file: `.epub` extension check, 5 MB upload cap (configurable via `MAX_UPLOAD_MB`), and Altcha PoW token verification
 2. DRM guard: if `encryption.xml` or other DRM markers are present, refuse clearly
-3. Unzip; walk each XHTML document, editing **only text nodes** — never tags, attributes, scripts, styles, or word interiors
+3. Unzip with decompression-bomb limits (max 1,000 entries, 10 MB per entry, 150 MB total expansion); walk each XHTML document, editing **only text nodes** — never tags, attributes, scripts, styles, or word interiors
 4. Insert U+2009 at boundaries chosen by the selected mode and Reading Support setting
 5. Inject `text-align: left` into the EPUB stylesheet
 6. Repack into a valid EPUB, preserving all metadata and markup; if a single document fails, leave it untouched rather than corrupting the file
@@ -150,15 +150,16 @@ STRONG_TRIGGERS         = [CCONJ, SCONJ, ADP, who, which, whom]
 | Backend language | Python 3.11 | |
 | Web framework | Flask | |
 | EPUB handling | `ebooklib` | Read/write EPUB |
-| HTML parsing | `BeautifulSoup` / `bs4` | Safe text-node walking only |
+| HTML parsing | `BeautifulSoup` / `bs4` + `lxml` | Safe text-node walking only |
 | NLP | `spaCy` (`en_core_web_sm`, `es_core_news_sm`) | POS tags + dependency parse |
+| WSGI server | `gunicorn` | 1 worker, 2 threads, `--preload` (spaCy loads at boot) |
 | Bot protection | Altcha PoW (custom SHA-256 solver) | Self-contained, zero external dependency |
 | Rate limiting | `Flask-Limiter` | 5 req/hr on `/api/process`, 60 req/min on `/api/preview` |
 | Algorithm constants | `textglide_config.py` + `textglide_config.js` | Kept in sync; citations inline |
 | Client-side engine | `naturalScan.ts` | Site-wide reading toggle |
-| Frontend | React + TypeScript + Tailwind | |
-| Container | Docker | Multi-stage build (Node to Python) |
-| Hosting | Fly.io | shared-cpu-1x, 512 MB, auto-stop |
+| Frontend | React + TypeScript + Tailwind + Vite | Radix UI / shadcn components |
+| Container | Docker | Multi-stage build (Node → Python) |
+| Hosting | Fly.io | shared-cpu-2x, 512 MB, auto-stop |
 
 ---
 
@@ -177,7 +178,9 @@ fly secrets set ALTCHA_HMAC_KEY="your-random-32-char-string"
 fly deploy --remote-only
 ```
 
-The app runs on a single shared-CPU Fly.io machine with auto-stop enabled. First cold start after idle takes approximately 3-5 seconds while spaCy loads.
+The app runs on a shared-cpu-2x Fly.io machine (2 vCPUs, 512 MB) with auto-stop enabled. First cold start after idle takes roughly 8–12 seconds while spaCy loads the English and Spanish models; subsequent requests are fast.
+
+Self-hosting gives you the full TextGlide experience: no 5 MB file-size cap, no rate limits, and complete control over the processing pipeline. If you regularly work with larger EPUBs or want unrestricted throughput, self-hosting is the recommended path.
 
 To run locally with Docker:
 
@@ -207,6 +210,8 @@ docker run -e ALTCHA_HMAC_KEY="your-secret" -e PORT=8080 -p 8080:8080 textglide
 | Mode consolidation | Retire Grammar Parse once real-world A/B tests confirm the winner |
 | Streaming progress (SSE) | Replace single-response processing with Server-Sent Events so large EPUBs aren't bounded by the HTTP proxy timeout |
 | Reading Support fine-tuning | Recalibrate the Strong setting's minimum character threshold to create a more pronounced difference from Balanced |
+| Processing time estimate | Show an estimated processing time based on character count before the user clicks Process, using a pre-scan endpoint |
+| Cold-start splash screen | Static HTML shell renders instantly on page load, before React hydrates and before the Fly.io worker finishes cold-starting |
 
 ### v2 — Exploratory 🔭
 
@@ -239,6 +244,25 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full process.
 ## 📬 Contact
 
 Open a thread in [GitHub Discussions](https://github.com/avocadoattack/TextGlide/discussions) for questions, feedback, or ideas.
+
+---
+
+## 💰 Costs
+
+Running TextGlide isn't free. Here's the actual cost breakdown, shared for full transparency:
+
+| Item | Cost |
+|---|---|
+| Domain (textglide.app) | $15 / year |
+| Hosting (Fly.io) | ~$5 / month (TBD) |
+| Replit Agent (one-time build cost) | $45 |
+| **Total for launch year (2026)** | **$120** |
+| **Total ongoing (per year)** | **$75** |
+
+If TextGlide has been useful to you, consider chipping in:
+
+[![Buy Me a Coffee](https://img.shields.io/badge/Support-Buy_Me_a_Coffee-FFDD00?logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/avocadoattack)
+[![Ko-fi](https://img.shields.io/badge/Support-Ko--fi-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/avocadoattack)
 
 ---
 
