@@ -1487,7 +1487,7 @@ function Home() {
                     Pick a mode and adjust the sliders
                   </strong>
                 </div>
-                <p className="text-muted-foreground leading-relaxed text-sm"><Spaced>Try the preview to find your preferred mode. Natural Scan relies on fast pattern detection, while Grammar Parse employs full grammar analysis.</Spaced></p>
+                <p className="text-muted-foreground leading-relaxed text-sm"><Spaced>Try the preview to find your preferred mode. Natural Scan relies on pattern detection, while Grammar Parse uses full grammar analysis.</Spaced></p>
               </div>
               <div className="bg-muted/30 border border-border/40 rounded-xl p-6 space-y-3">
                 <div className="flex items-center gap-3">
