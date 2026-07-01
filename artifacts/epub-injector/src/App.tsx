@@ -1265,6 +1265,21 @@ function Home() {
             </h2>
 
             <div className="flex flex-col items-center gap-4">
+              {/* Settings recap — compact, above dropzone */}
+              <div
+                className="flex items-center gap-1.5 text-xs text-muted-foreground self-start"
+                data-testid="settings-recap"
+              >
+                <InfoIcon className="h-3.5 w-3.5 shrink-0" />
+                <span>
+                  <strong className="text-foreground">{modeLabel(state.mode)}</strong>
+                  {" · "}
+                  <strong className="text-foreground">{getSupportLabel(state.readingSupport).toLowerCase()}</strong>
+                  {" · "}
+                  {state.language === "auto" ? "auto-detect language" : state.language}
+                </span>
+              </div>
+
               {/* Dropzone */}
               <div
                 className={`w-full border-2 border-dashed flex flex-col items-center justify-center py-10 md:py-16 px-5 md:px-8 text-center cursor-pointer transition-colors rounded-xl ${
@@ -1314,39 +1329,11 @@ function Home() {
                         Click to browse or drag .epub here
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        DRM-free EPUBs only
+                        Max file size: 5MB · 5 EPUBs per hour
                       </p>
                     </div>
                   </div>
                 )}
-              </div>
-
-              {/* File size info */}
-              <p className="text-xs text-muted-foreground/60 text-center w-full">
-                Max file size: 5MB · 5 processings per hour
-              </p>
-
-              {/* Settings recap */}
-              <div
-                className="flex items-center justify-center gap-2 text-sm text-muted-foreground bg-muted/30 px-5 py-3 rounded-lg border border-border/40 w-full text-center"
-                data-testid="settings-recap"
-              >
-                <InfoIcon className="h-4 w-4 shrink-0" />
-                <span>
-                  Using:{" "}
-                  <strong className="text-foreground">
-                    {modeLabel(state.mode)}
-                  </strong>{" "}
-                  mode,{" "}
-                  <strong className="text-foreground">
-                    {getSupportLabel(state.readingSupport).toLowerCase()}
-                  </strong>{" "}
-                  support (
-                  {state.language === "auto"
-                    ? "auto-detect language"
-                    : state.language}
-                  ).
-                </span>
               </div>
 
               {/* Left-align reminder */}
@@ -1763,7 +1750,7 @@ function Home() {
               lineHeight: "1.5",
             }}
           >
-            <span>© 2026 Mr. Avocado</span>
+            <span>© 2026 avocadoattack</span>
             <a
               href="https://github.com/avocadoattack/textglide/blob/main/CONTRIBUTING.md"
               target="_blank"
@@ -1841,8 +1828,8 @@ function Home() {
           tabIndex={-1}
           style={{
             position: "absolute",
-            bottom: "6px",
-            right: "10px",
+            bottom: 0,
+            right: 0,
             background: "none",
             border: "none",
             padding: 0,
