@@ -1266,18 +1266,21 @@ function Home() {
 
             <div className="flex flex-col items-center gap-4">
               {/* Settings recap — compact, above dropzone */}
-              <div
-                className="flex items-center gap-1.5 text-xs text-muted-foreground self-start"
-                data-testid="settings-recap"
-              >
-                <InfoIcon className="h-3.5 w-3.5 shrink-0" />
-                <span>
-                  <strong className="text-foreground">{modeLabel(state.mode)}</strong>
-                  {" · "}
-                  <strong className="text-foreground">{getSupportLabel(state.readingSupport).toLowerCase()}</strong>
-                  {" · "}
-                  {state.language === "auto" ? "auto-detect language" : state.language}
-                </span>
+              <div className="w-full space-y-1">
+                <div
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/30 border border-border/40 rounded-lg px-3 py-2 w-full"
+                  data-testid="settings-recap"
+                >
+                  <InfoIcon className="h-3.5 w-3.5 shrink-0" />
+                  <span>
+                    <strong className="text-foreground">{modeLabel(state.mode)}</strong>
+                    {" · "}
+                    <strong className="text-foreground">{getSupportLabel(state.readingSupport)}</strong>
+                    {" · "}
+                    {state.language === "auto" ? "Auto-detect language" : state.language}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground/60 pl-1">You can change these settings above.</p>
               </div>
 
               {/* Dropzone */}
@@ -1329,7 +1332,7 @@ function Home() {
                         Click to browse or drag .epub here
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Max file size: 5MB · 5 EPUBs per hour
+                        Max. Limits: 5MB / file and 5 EPUBs / hour
                       </p>
                     </div>
                   </div>
@@ -1338,7 +1341,21 @@ function Home() {
 
               {/* Left-align reminder */}
               <p className="text-xs text-muted-foreground/70 text-center w-full leading-relaxed">
-                For best results, set your e-reader to <strong className="text-muted-foreground">left-aligned (ragged-right)</strong> text. Justified text stretches normal spaces and can cancel out the phrase spacing.
+                For best results, set your e-reader to left-aligned (ragged-right) text. Justified text stretches normal spaces and can cancel out the phrase spacing.
+              </p>
+
+              {/* Self-hosting nudge */}
+              <p className="text-xs text-muted-foreground/70 text-center w-full leading-relaxed">
+                This hosted version is just a taste.{" "}
+                <a
+                  href="https://github.com/avocadoattack/TextGlide"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  Self-host TextGlide
+                </a>{" "}
+                for unlimited file sizes, no rate limits, and full control.
               </p>
 
               {/* Process button */}
@@ -1441,19 +1458,6 @@ function Home() {
               </div>
             )}
 
-            {/* Self-hosting nudge */}
-            <p className="text-xs text-center leading-relaxed" style={{ color: "#9a7c5a", marginTop: "8px" }}>
-              This hosted version is just a taste.{" "}
-              <a
-                href="https://github.com/avocadoattack/TextGlide"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: "#7a6349", textDecoration: "underline" }}
-              >
-                Self-host TextGlide
-              </a>{" "}
-              for unlimited file sizes, no rate limits, and full control.
-            </p>
           </div>
         </section>
 
