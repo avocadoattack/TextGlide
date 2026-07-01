@@ -1497,7 +1497,7 @@ function Home() {
                   Pick a mode and adjust the sliders
                 </strong>
               </div>
-              <p className="text-muted-foreground leading-relaxed text-sm"><Spaced>Try the live preview to find your preferred mode. Natural Scan relies on fast pattern detection, while Grammar Parse employs full grammar analysis.</Spaced></p>
+              <p className="text-muted-foreground leading-relaxed text-sm"><Spaced>Try the preview to find your preferred mode. Natural Scan relies on fast pattern detection, while Grammar Parse employs full grammar analysis.</Spaced></p>
             </div>
             <div className="bg-muted/30 border border-border/40 rounded-xl p-6 space-y-3">
               <div className="flex items-center gap-3">
@@ -1536,7 +1536,7 @@ function Home() {
               <p className="font-medium text-foreground">
                 Syntactically cued formatting
               </p>
-              <p><Spaced>Adding spacing to show phrase breaks helps readers. North & Jenkins first studied this in 1951 and found that readers were faster and understood more when phrase structure was cued. Many later studies have confirmed this.</Spaced></p>
+              <p><Spaced>Adding spacing to show phrase breaks helps readers. North & Jenkins first studied this in 1951 and found that readers were faster and understood more when phrase structure was cued. Many studies have confirmed this.</Spaced></p>
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">Pseudosyntax</p>
@@ -1554,7 +1554,7 @@ function Home() {
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">Eye-fixation span</p>
-              <p><Spaced>The eye takes in roughly 1–2 words per fixation, spending ~250ms on each. Poor readers make more fixations, hold them longer, and regress more often than skilled readers. Phrase-sized chunks align with this natural fixation rhythm, reducing the work per glance (Lefton, Nagle & Johnson, 1979).</Spaced></p>
+              <p><Spaced>The eye takes in roughly 1–2 words per fixation, spending ~250ms on each. Poor readers make more fixations, hold them longer, and regress more often. Phrase-sized chunks align with this natural fixation rhythm, reducing the work per glance (Lefton, Nagle & Johnson, 1979).</Spaced></p>
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">
