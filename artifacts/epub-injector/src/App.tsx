@@ -1661,7 +1661,7 @@ function Home() {
               <Spaced>These results come from studies over many years and use different methods, with some based on small groups. The trend is clear: cueing phrases make reading feel easier, but the effect size varies, and results can differ from person to person.</Spaced>
             </p>
             <p style={{ fontSize: "12px", color: "#888", marginTop: "8px", borderTop: "1px solid #E8E4DC", paddingTop: "8px", lineHeight: "1.5" }}>
-              * Statistically significant result (p &lt; .05). Approximately half of all studies in this corpus found no significant effect — this is stated honestly in the FAQ.
+              * Statistically significant result (p &lt; .05). Approximately half of all studies in this corpus found no significant effect; this is stated honestly in the FAQ.
             </p>
           </section>
 
